@@ -1,14 +1,6 @@
 {
   security.pam.services.sudo_local.touchIdAuth = true;
 
-  networking.applicationFirewall = {
-    enable = true;
-    enableStealthMode = false;
-    blockAllIncoming = false;
-    allowSigned = true;
-    allowSignedApp = true;
-  };
-
   system.defaults = {
     NSGlobalDomain = {
       AppleKeyboardUIMode = 3;
@@ -21,8 +13,6 @@
       NSAutomaticQuoteSubstitutionEnabled = false;
       NSAutomaticSpellingCorrectionEnabled = false;
     };
-
-    SoftwareUpdate.AutomaticallyInstallMacOSUpdates = true;
 
     dock = {
       autohide = true;

@@ -13,9 +13,16 @@ nix eval --raw "$config.networking.computerName" | grep -qx 'tのMac mini'
 nix eval --raw "$config.networking.localHostName" | grep -qx 'tinoMac-mini'
 
 nix eval --json "$config.security.pam.services.sudo_local.touchIdAuth" | jq -e '. == true' >/dev/null
-nix eval --json "$config.networking.applicationFirewall.enable" | jq -e '. == true' >/dev/null
-nix eval --json "$config.networking.applicationFirewall.enableStealthMode" | jq -e '. == false' >/dev/null
-nix eval --json "$config.system.defaults.SoftwareUpdate.AutomaticallyInstallMacOSUpdates" | jq -e '. == true' >/dev/null
+nix eval --json "$config.networking.applicationFirewall" |
+  jq -e '
+    .enable == null and
+    .blockAllIncoming == null and
+    .allowSigned == null and
+    .allowSignedApp == null and
+    .enableStealthMode == null
+  ' >/dev/null
+nix eval --json "$config.system.defaults.SoftwareUpdate.AutomaticallyInstallMacOSUpdates" |
+  jq -e '. == null' >/dev/null
 
 nix eval --raw "$config.system.defaults.finder.FXPreferredViewStyle" | grep -qx 'Nlsv'
 nix eval --json "$config.system.defaults.finder.AppleShowAllExtensions" | jq -e '. == true' >/dev/null
