@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+test -f justfile
+test -f README.md
+test -f .github/workflows/check.yml
+test -x tests/secrets.sh
+test -x tests/templates.sh
+grep -Fq 'bash tests/secrets.sh' justfile
+grep -Fq 'bash tests/templates.sh' justfile
+grep -Fq 'ubuntu-24.04-arm' .github/workflows/check.yml
+grep -Fq 'tt@linux-aarch64' .github/workflows/check.yml
+grep -Fq 'tt@linux-x86_64' .github/workflows/check.yml
+
+for template in minimal bun node-pnpm python-uv ios; do
+  test -f "templates/$template/flake.nix"
+  test -f "templates/$template/.envrc"
+  test -f "templates/$template/.env.op"
+  test -f "templates/$template/justfile"
+  test -f "templates/$template/AGENTS.md"
+done
+
+test -f templates/bun/package.json
+test -f templates/bun/bun.lock
+test -f templates/bun/src/index.ts
+test -f templates/bun/src/index.test.ts
+test -f templates/node-pnpm/package.json
+test -f templates/node-pnpm/pnpm-lock.yaml
+test -f templates/node-pnpm/src/index.js
+test -f templates/node-pnpm/src/index.test.js
+test -f templates/python-uv/pyproject.toml
+test -f templates/python-uv/uv.lock
+test -f templates/python-uv/src/python_project/__init__.py
+test -f templates/python-uv/tests/test_package.py
+test -f templates/ios/Gemfile
+test -f templates/ios/Gemfile.lock
+test -f templates/ios/.xcode-version
+test -f templates/ios/project.yml
+test -f templates/ios/fastlane/Fastfile
+test -f templates/ios/Sources/App.swift
+test -f templates/ios/Tests/AppTests.swift
+
+for recipe in cloudflare vercel turso; do
+  test -f "recipes/$recipe.md"
+done
+
+nix eval --json .#templates --apply builtins.attrNames |
+  jq -e '. == ["bun", "default", "ios", "minimal", "node-pnpm", "python-uv"]' >/dev/null
+
+for recipe in check build diff apply update rollback; do
+  grep -Eq "^${recipe}([[:space:]].*)?:" justfile
+done
+
+test ! -e files/p10k.zsh
+test ! -e files/wezterm.lua

@@ -1,0 +1,14 @@
+set default-list := true
+
+sync:
+    uv sync --locked
+
+dev:
+    uv run python
+
+check:
+    uv run ruff check .
+    uv run pytest
+
+test:
+    uv run pytest

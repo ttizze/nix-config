@@ -26,10 +26,6 @@
       flake = false;
     };
 
-    hermes-agent = {
-      url = "github:NousResearch/hermes-agent";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -112,6 +108,48 @@
           dcg = pkgs.dcg;
         }
       );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = mkPkgs system;
+        in
+        {
+          default = pkgs.mkShellNoCC {
+            packages = with pkgs; [
+              jq
+              just
+              nixfmt-tree
+              nvd
+              shellcheck
+            ];
+          };
+        }
+      );
+
+      templates = rec {
+        minimal = {
+          path = ./templates/minimal;
+          description = "Minimal Nix project with direnv, just, and Agent instructions";
+        };
+        bun = {
+          path = ./templates/bun;
+          description = "Bun project with a Nix-pinned runtime";
+        };
+        node-pnpm = {
+          path = ./templates/node-pnpm;
+          description = "Node.js and pnpm project with Nix-pinned tools";
+        };
+        python-uv = {
+          path = ./templates/python-uv;
+          description = "Python and uv project with Nix owning the interpreter";
+        };
+        ios = {
+          path = ./templates/ios;
+          description = "iOS project with XcodeGen and Ruby tooling";
+        };
+        default = minimal;
+      };
 
       formatter = forAllSystems (system: (mkPkgs system).nixfmt-tree);
     };

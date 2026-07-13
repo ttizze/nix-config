@@ -1,0 +1,43 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  darwin:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lix
+        uses: samueldr/lix-gha-installer-action@8dc19fbd6451fa106a68ecb2dafeeeb90dff3a29
+      - name: Check repository and project templates
+        run: nix develop --command just check
+      - name: Build the Darwin system without activating it
+        run: nix build .#darwinConfigurations.tinoMac-mini.system
+
+  linux-home-manager:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            configuration: tt@linux-x86_64
+          - runner: ubuntu-24.04-arm
+            configuration: tt@linux-aarch64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lix
+        uses: samueldr/lix-gha-installer-action@8dc19fbd6451fa106a68ecb2dafeeeb90dff3a29
+      - name: Build Home Manager activation
+        run: nix build --print-out-paths ".#homeConfigurations.\"${{ matrix.configuration }}\".activationPackage"

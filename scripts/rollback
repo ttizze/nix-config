@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+profile=/nix/var/nix/profiles/system
+if [[ ! -e "$profile" ]]; then
+  echo "No nix-darwin system profile exists yet." >&2
+  exit 1
+fi
+
+sudo nix-env --profile "$profile" --rollback
+sudo "$profile/activate"

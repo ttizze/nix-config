@@ -6,7 +6,11 @@
   ...
 }:
 {
-  imports = [ ../../modules/darwin/system.nix ];
+  imports = [
+    ../../modules/darwin/system.nix
+    ../../modules/darwin/defaults.nix
+    ../../modules/darwin/homebrew.nix
+  ];
 
   nixpkgs = {
     hostPlatform = "aarch64-darwin";

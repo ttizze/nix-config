@@ -1,0 +1,4 @@
+set default-list := true
+
+check:
+    nix flake check

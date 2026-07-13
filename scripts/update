@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+input="${1:-}"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Refusing to update a dirty Git worktree." >&2
+  exit 1
+fi
+
+if [[ -n "$input" ]]; then
+  nix flake update "$input"
+else
+  nix flake update
+fi
+
+just check
+just build
+git diff -- flake.lock

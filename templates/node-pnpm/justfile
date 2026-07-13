@@ -1,0 +1,13 @@
+set default-list := true
+
+install:
+    pnpm install --frozen-lockfile
+
+dev:
+    pnpm dev
+
+check:
+    pnpm check
+
+test:
+    pnpm test

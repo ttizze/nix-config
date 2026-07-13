@@ -1,0 +1,13 @@
+{
+  "name": "node-project",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "check": "pnpm test",
+    "dev": "node src/index.js",
+    "test": "node --test"
+  }
+}

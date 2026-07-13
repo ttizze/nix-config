@@ -1,311 +1,152 @@
 # Personal Nix Configuration Design
 
-Status: approved architecture, pending written-spec review
+Status: implemented locally; Darwin build verified; Linux evaluated with native CI configured; not activated
 Date: 2026-07-13
 
-## 1. Purpose
+## Purpose
 
-Create a clean, reproducible personal environment for:
+Provide one reproducible source of truth for:
 
 - the Apple Silicon Mac `tinoMac-mini`;
-- interactive CLI use on Ubuntu hosts, on both `x86_64-linux` and `aarch64-linux`;
-- the user `tt`;
-- rebuilding a new machine without depending on undocumented local state.
+- the user `tt` on macOS;
+- the shared interactive user environment on `aarch64-linux` and `x86_64-linux`;
+- new project toolchains without hidden machine-global runtime dependencies.
 
-The new source of truth will be a public repository named `ttizze/nix-config`. The existing `ttizze/dotfiles` repository is only a migration reference and behavioral baseline. Its history and structure will not be imported into the new repository. After migration is verified, the old repository will be archived.
+The machine repository is `nix-config`. Stable agent policy and custom skills live in the separate `agent-config` repository. Runtime state, credentials, caches, histories, and application databases belong in neither repository.
 
-## 2. First principles
+## Principles
 
-1. **Declare desired state, not runtime state.** Stable configuration belongs in Git. Caches, histories, authentication sessions, generated application state, and machine-local databases do not.
-2. **Separate privilege boundaries.** macOS system state and user-home state have different owners and failure modes.
-3. **Keep shared configuration genuinely portable.** Common modules must not contain Darwin-only paths or Linux-only service assumptions.
-4. **Keep secrets out of Git and the Nix store.** The repository may describe how secrets are accessed, but must not contain their values.
-5. **Put project dependencies with the project.** Project-specific Node, Bun, Rust, database, and toolchain versions must not be hidden in the machine configuration.
-6. **Pin every dependency and update deliberately.** Reproducibility comes from `flake.lock`, review, checks, and rollback.
-7. **Prefer the smallest stable abstraction.** Use plain flakes and Nix modules. Do not add `flake-parts`, a private framework, or duplicated package sets without a demonstrated need.
-8. **Build before activation and preserve rollback.** No destructive cleanup occurs until the replacement has passed behavioral verification.
+1. Declare desired state, not an inventory of everything currently installed.
+2. Keep system, user, project, secret, and mutable application state at separate ownership boundaries.
+3. Pin dependencies and build before activation.
+4. Keep the interactive global baseline small.
+5. Put project runtimes and deployment CLIs in each project.
+6. Never resolve a secret into Git, a shell startup file, or the Nix store.
+7. Do not delete or upgrade unrelated applications as a side effect of normal activation.
 
-## 3. Chosen stack
+## Ownership
 
-### 3.1 Lix
+### Lix
 
-Use Lix as the Nix implementation on macOS and Ubuntu. Lix is compatible with Nix expressions, Nixpkgs, Home Manager, and nix-darwin. Its installer supports macOS and Linux, survives macOS upgrades, and provides an uninstaller.
+Lix is the installed Nix implementation and the package selected by nix-darwin. Flakes and the `nix` command are enabled by the installer.
 
-The installer and runtime implementation are separate decisions. This design intentionally uses Lix for both so Mac and Linux have one operational model.
+### nix-darwin
 
-### 3.2 nix-darwin
+nix-darwin owns supported macOS state:
 
-nix-darwin owns macOS system-level state:
-
-- supported macOS defaults;
-- launchd services;
-- system-level Nix and garbage-collection policy;
-- shell enablement;
-- the Homebrew installation and declared native applications;
+- host name and time zone;
+- Nix daemon, garbage collection, and store optimisation;
+- firewall, Touch ID for sudo, and automatic macOS updates;
+- stable Finder, Dock, keyboard, and cmux defaults;
+- the declared Homebrew cask set;
 - the embedded Home Manager configuration for `tt`.
 
-System packages remain minimal. Tools used only by `tt` belong in Home Manager, not `environment.systemPackages`.
-
-### 3.3 Home Manager
-
-Home Manager owns reproducible user state:
-
-- CLI packages;
-- zsh, Git, tmux, fzf, zoxide, direnv, and related program settings;
-- portable environment variables and aliases;
-- stable configuration files under the home directory;
-- OS-specific user configuration selected through Darwin and Linux modules.
-
-On macOS, Home Manager runs as a nix-darwin module so one system activation applies both system and user state. On Ubuntu, Home Manager runs stand-alone and does not attempt to manage the Ubuntu operating system.
-
-### 3.4 Homebrew boundary
-
-Homebrew is not a second source of truth.
-
-- `nix-homebrew` installs and pins Homebrew itself.
-- nix-darwin's `homebrew.*` options declare required casks and any unavoidable formula exceptions.
-- CLI formulae move to Nix wherever a maintained Nixpkgs package exists.
-- Homebrew is retained only for macOS-native applications or packages whose Nix version is unsuitable.
-- After migration verification, strict cleanup is enabled so undeclared Homebrew packages are removed on activation.
-
-The initial cask set is `1password`, `1password-cli`, and `orbstack`. A new cask requires an explicit review showing why the application should not come from Nixpkgs or the Mac App Store.
-
-## 4. Repository design
-
-```text
-nix-config/
-├── flake.nix
-├── flake.lock
-├── README.md
-├── hosts/
-│   └── tinoMac-mini/
-│       └── default.nix
-├── home/
-│   └── tt/
-│       ├── common.nix
-│       ├── darwin.nix
-│       └── linux.nix
-├── modules/
-│   ├── darwin/
-│   │   ├── system.nix
-│   │   ├── defaults.nix
-│   │   └── homebrew.nix
-│   └── home/
-│       ├── shell.nix
-│       ├── git.nix
-│       ├── cli.nix
-│       ├── terminal.nix
-│       └── ssh.nix
-├── files/
-│   ├── p10k.zsh
-│   └── wezterm.lua
-├── bin/
-│   ├── apply
-│   ├── build
-│   └── update
-└── tests/
-```
+### Home Manager
 
-The layout may omit an empty directory. New modules are created only when they have a distinct responsibility.
+Home Manager owns stable user state:
 
-The flake exposes:
+- the small CLI baseline;
+- zsh and Starship;
+- Git, SSH includes, direnv, nix-direnv, fzf, zoxide, and tmux;
+- stable Karabiner-Elements and Zed configuration files;
+- shared Linux user configurations.
 
-- `darwinConfigurations.tinoMac-mini` for `aarch64-darwin`;
-- Home Manager configurations for `tt` on `x86_64-linux` and `aarch64-linux`;
-- checks that evaluate or build all supported outputs.
+Home Manager does not own histories, login sessions, caches, recent files, window geometry, application databases, or agent conversation state.
 
-The repository uses one pinned `nixpkgs-unstable` input. Home Manager and nix-darwin follow that same Nixpkgs input. A second stable package set is not added unless a concrete compatibility problem requires it.
+### Homebrew
 
-## 5. Configuration ownership
+Homebrew exists only for native macOS applications that are unsuitable as ordinary Nix packages. The desired casks are:
 
-### 5.1 Managed declaratively
+- 1Password and 1Password CLI;
+- ChatGPT and Claude;
+- cmux;
+- Discord;
+- Google Chrome;
+- Karabiner-Elements;
+- Logitech Options+;
+- Zed.
 
-- package selection;
-- aliases and shell functions;
-- zsh plugins and Powerlevel10k;
-- Git configuration that is safe to publish;
-- tmux, fzf, zoxide, direnv, eza, bat, fd, ripgrep, gh, ghq, jq, yq, and similar CLI configuration;
-- WezTerm's stable configuration;
-- safe SSH client defaults and inclusion of 1Password-managed configuration;
-- supported macOS defaults and declared native applications.
+Circleback remains unmanaged because no matching Homebrew cask is available. Apple applications and Xcode remain Apple-managed.
 
-Use native Home Manager options when they express the desired behavior clearly. Keep literal files under `files/` only when a native module would lose behavior or make the configuration harder to understand.
+Normal activation uses `homebrew.onActivation.cleanup = "none"`, does not auto-update Homebrew, and does not upgrade casks. `just apps-update` is the explicit upgrade path.
 
-### 5.2 Not managed declaratively
+Hermes and its embedded Node, OrbStack, Open Design, PLUG, and Typeless may remain installed on this Mac. They are intentionally absent from desired state, so a new Mac will not install them and normal activation will not remove them.
 
-- shell history;
-- browser state;
-- 1Password vault data;
-- GitHub and application login sessions;
-- `.claude.json` or similar files when they mix settings with runtime or authentication state;
-- Codex, Claude, or plugin caches and generated installation state;
-- application databases, logs, and caches;
-- private SSH host metadata unless intentionally placed in 1Password.
+## Global and project tool boundary
 
-If an application file contains both stable settings and mutable state, manage only a supported stable fragment or generated template. Do not take ownership of the entire mutable file.
+The global baseline includes ordinary interactive tools plus `blueutil`, GnuPG, and `pinentry-mac`. `blueutil` is the single Homebrew formula exception because the Nixpkgs package fails to link on the current macOS/Xcode toolchain; GnuPG and `pinentry-mac` come from Nix. The baseline does not include mise, Node.js, Bun, pnpm, Wrangler, Vercel CLI, Turso CLI, Fastlane, XcodeGen, CMake, Ninja, Python, or Rust.
 
-## 6. Development environments
+Project repositories select their own tools through `flake.nix`, `flake.lock`, `.envrc`, and a `justfile`. The machine repository exports templates for:
 
-The machine configuration provides a small interactive baseline. Project-specific toolchains live in each project repository:
+- minimal Nix projects;
+- Bun projects;
+- Node.js 24 and pnpm projects;
+- Python 3.13 and uv projects;
+- iOS projects with Nix-owned Ruby, Bundler, XcodeGen, and Gemfile-owned Fastlane.
 
-- `flake.nix` or an equivalent Nix development-shell definition;
-- `.envrc` with `use flake`;
-- a project-local lock file;
-- project checks that verify the environment.
+Cloudflare, Vercel, and Turso are additive recipes. A project installs only the deployment or database CLI it actually uses.
 
-mise is removed after the required projects have an explicit replacement. Node.js 24 LTS and Bun remain in the Home Manager baseline for ad hoc commands, but no project may rely on those implicit versions.
+Python uses a split boundary: Nix owns Python and uv; uv owns project dependencies and `.venv`; uv is forbidden from downloading its own Python interpreter.
 
-## 7. Secrets design
+## Shell and application behavior
 
-### 7.1 Interactive and human-owned secrets
+- Use zsh with Starship.
+- Do not use Oh My Zsh, Powerlevel10k, mise activation, or global Bun initialization.
+- Preserve the approved aliases, navigation helpers, Git behavior, 1Password SSH Agent socket, and SSH includes.
+- Link stable Zed settings, including the Codex ACP registry entry and system-aware theme.
 
-1Password is the system of record for:
+Karabiner-Elements preserves:
 
-- SSH private keys;
-- Git signing keys;
-- API tokens and credentials used interactively;
-- passwords and recovery codes.
+- Caps Lock as left Control;
+- left Command alone as Eisuu and right Command alone as Kana;
+- the approved Japanese Muhenkan and Henkan behavior;
+- the current Logitech device's button swap;
+- a JIS virtual keyboard.
 
-Rules:
+Shift-Command-3 and Shift-Command-4 add Control so static screenshots go to the clipboard. Shift-Command-5 remains unchanged for screen recording and advanced capture controls.
 
-- Do not keep a plaintext `~/.ssh/id_ed25519` after key rotation is verified.
-- Generate a new SSH key inside 1Password, update authorized public keys, verify access, and only then retire the old local key.
-- Use the 1Password SSH Agent for SSH authentication and Git signing.
-- Use `op run`, `op inject`, or a supported 1Password shell plugin to inject API credentials into one process.
-- Do not export long-lived secrets from `.zshrc`, Home Manager, or nix-darwin.
-- Do not put concrete vault names, item names, or secret-reference URIs in the public machine repository unless there is a reviewed reason.
+## Secrets
 
-### 7.2 Unattended services
+1Password is the source of truth for interactive credentials, SSH keys, signing keys, and personal profile data.
 
-1Password is not sufficient for a service that must start before an interactive login or vault unlock. When such a service appears, add `sops-nix` for that service only:
+- Tracked `.env.op` files may contain reviewed `op://` references.
+- Commands resolve references only for the process that needs them with `op run` or `op inject`.
+- Resolved values, private keys, session tokens, and authentication state are forbidden in both repositories.
+- `agent-config` profile lookup requests only allowlisted fields and fails on missing or duplicate values.
+- Unattended services may add sops-nix later, but only when an actual pre-login secret requirement exists.
 
-- commit only SOPS-encrypted material;
-- use a host-specific age recipient;
-- store the host age private key locally with strict permissions;
-- back up that age private key in 1Password;
-- decrypt into the platform runtime-secret directory, not the Nix store;
-- grant each service access only to its required secret.
+## Agent configuration repository
 
-Do not add sops-nix before an unattended secret is actually required.
+`agent-config` contains only stable, publishable policy:
 
-### 7.3 CI secrets
+- Codex rules and keybindings;
+- Claude permissions and hooks;
+- custom skills and their safe scripts;
+- a Home Manager module that links those files into the user home.
 
-CI secrets remain in the CI provider's secret store or use a least-privilege 1Password service account. They are not reused from an interactive personal session.
+Device IDs, Apple team IDs, build IDs, contact values, authentication files, sessions, caches, and project trust state are excluded. Machine integration waits for a stable remote; the Nix repository does not embed an absolute local path.
 
-## 8. Activation and update flow
+## Activation and rollback
 
-### 8.1 New Mac
+The normal flow is:
 
-1. Install the Lix multi-user runtime through the Lix installer.
-2. Clone `ttizze/nix-config`.
-3. Build the `tinoMac-mini` configuration without activation.
-4. Activate nix-darwin, which also activates Home Manager.
-5. Open a fresh terminal and run smoke tests.
-6. Reboot and repeat the smoke tests before removing legacy managers.
+1. `just check`
+2. `just build`
+3. `just diff`
+4. commit the exact source being activated
+5. `just apply`
+6. open a fresh terminal and reboot before removing any legacy manager or authentication method
 
-### 8.2 New Ubuntu host
+`just apply` refuses the wrong host, a dirty worktree, or an unbuilt configuration. `just rollback` activates the previous nix-darwin system generation. Homebrew app state and mutable application data are deliberately outside Nix generation rollback.
 
-1. Install the Lix multi-user runtime. Supported Ubuntu hosts must use systemd and provide sudo access for bootstrap; rootless hosts are outside the initial scope.
-2. Clone `ttizze/nix-config`.
-3. Build the matching Linux Home Manager output.
-4. Activate Home Manager.
-5. Start a fresh shell and run smoke tests.
+## Acceptance criteria
 
-The implementation will provide `bin/build`, `bin/apply`, and `bin/update` wrappers. The wrappers must print the exact target and refuse unknown hosts instead of guessing.
-
-### 8.3 Updates
-
-1. Update selected flake inputs explicitly.
-2. Review the lock-file diff.
-3. Run all repository checks.
-4. Build the local host without activation.
-5. Activate only after checks pass.
-6. Keep previous generations until the new configuration has survived normal use and a reboot.
-
-No unattended job automatically changes `flake.lock` or activates a new generation.
-
-## 9. Failure handling and rollback
-
-- A failed evaluation or build makes no system changes.
-- Activation scripts must be idempotent and fail with actionable errors.
-- Existing home files are inventoried and backed up before Home Manager takes ownership.
-- Home Manager file collisions stop activation; they are not silently overwritten.
-- Homebrew cleanup remains non-destructive during migration.
-- nix-darwin and Home Manager generations provide rollback after activation.
-- The old dotfiles checkout, Homebrew formulae, mise installation, and local SSH key remain intact until their replacements pass verification.
-- If a reboot exposes a shell or PATH regression, roll back the generation before changing additional variables.
-
-The migration must never delete an authentication method until a replacement has been exercised against every required Git host and server.
-
-## 10. Verification
-
-### 10.1 Static and build checks
-
-- format and parse all Nix files;
-- run `nix flake check`;
-- build the Darwin configuration without switching;
-- build both supported Linux Home Manager activation packages;
-- detect unresolved or unsupported packages on each platform;
-- scan tracked files and built configuration sources for accidental secret values and forbidden private-key material.
-
-### 10.2 Behavioral smoke tests
-
-- a login zsh and interactive zsh start without warnings;
-- expected aliases and functions exist;
-- `git`, `gh`, `ghq`, `fzf`, `zoxide`, `direnv`, `tmux`, `bun`, and Node.js 24 LTS resolve from the intended package source;
-- GitHub authentication still works;
-- Git commit signing works through 1Password;
-- SSH works through the 1Password Agent;
-- WezTerm starts with the expected appearance and key bindings;
-- OrbStack and declared native applications start;
-- the Mac passes the same checks after reboot;
-- a previous system and Home Manager generation can be selected successfully.
-
-### 10.3 Cross-platform CI
-
-GitHub Actions evaluates and builds the supported outputs on macOS and Ubuntu runners. CI must not require personal secrets. Platform outputs may be evaluated separately when a hosted runner cannot build the target architecture directly.
-
-## 11. Migration sequence
-
-1. Create the new repository with clean history.
-2. Capture current behavior and package inventory without importing legacy structure.
-3. Implement the flake and module skeleton.
-4. Port common CLI packages and shell behavior to Home Manager.
-5. Add Darwin system configuration and the strict Homebrew boundary.
-6. Build every output without activation.
-7. Install Lix and activate the Mac configuration.
-8. Run terminal, application, authentication, and reboot verification.
-9. Replace project runtimes with project-local Nix environments.
-10. Generate and deploy the new 1Password-managed SSH key, then retire the old key after all access paths pass.
-11. Remove migrated Homebrew formulae, mise, and chezmoi.
-12. Confirm a clean rebuild and rollback.
-13. Archive `ttizze/dotfiles`.
-
-Steps that remove legacy state are separate commits and occur only after their exit criteria pass.
-
-## 12. Acceptance criteria
-
-The design is complete when all of the following are true:
-
-- a clean Apple Silicon Mac can reach the declared state from the repository and documented bootstrap steps;
-- Ubuntu on both supported architectures can apply the shared user environment;
-- the current user-visible shell, terminal, Git, and navigation workflows are preserved unless a documented improvement is approved;
-- project-specific runtime versions are no longer supplied implicitly by mise;
-- Homebrew contains only declared native-app or reviewed exception packages;
-- mise and chezmoi are not required at runtime;
-- no secret value or private key is tracked by Git or embedded in a Nix store derivation;
-- SSH and Git signing use 1Password-managed keys;
-- unattended services, if any, obtain secrets without interactive 1Password unlock through the scoped sops-nix design;
-- update, build, activation, reboot, and rollback paths have been exercised;
-- the old dotfiles repository can be archived without losing required behavior.
-
-## 13. Authoritative references
-
-- Lix installation and compatibility: <https://lix.systems/install/>
-- nix-darwin: <https://github.com/nix-darwin/nix-darwin>
-- Home Manager: <https://nix-community.github.io/home-manager/>
-- nix-homebrew: <https://github.com/zhaofengli/nix-homebrew>
-- 1Password CLI secret injection: <https://developer.1password.com/docs/cli/secrets-scripts>
-- 1Password SSH Agent: <https://developer.1password.com/docs/ssh/agent/>
-- sops-nix: <https://github.com/Mic92/sops-nix>
-- Node.js release status: <https://nodejs.org/en/about/previous-releases>
+- all supported outputs evaluate and build;
+- the Darwin system builds without switching;
+- Linux Home Manager activation packages build;
+- every project template enters its pinned shell and passes its smoke test;
+- no forbidden runtime or deployment CLI appears in the global package set;
+- declared casks exactly match the approved desired set;
+- normal activation neither removes unmanaged applications nor upgrades casks;
+- no secret value, private key, authentication state, or hard-coded device identifier is tracked;
+- the user explicitly approves the first activation after reviewing the build and diff.

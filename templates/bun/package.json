@@ -1,0 +1,12 @@
+{
+  "name": "bun-project",
+  "private": true,
+  "scripts": {
+    "check": "bun test",
+    "dev": "bun run src/index.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

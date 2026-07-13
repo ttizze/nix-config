@@ -1,0 +1,8 @@
+.bundle/
+.direnv/
+*.xcodeproj/
+DerivedData/
+Generated/
+Pods/
+result
+vendor/bundle/

@@ -1,0 +1,23 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Validate the XcodeGen specification and generated project"
+  lane :lint do
+    sh("xcodegen --spec project.yml --quiet")
+    sh("xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -showBuildSettings >/dev/null")
+  end
+
+  desc "Run the unit tests in the iOS simulator"
+  lane :test do
+    scan(
+      project: "App.xcodeproj",
+      scheme: "App",
+      device: "iPhone 17 Pro"
+    )
+  end
+
+  desc "Project-specific release lane"
+  lane :release do
+    UI.user_error!("Replace this placeholder with the project's reviewed release workflow")
+  end
+end

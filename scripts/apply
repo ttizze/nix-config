@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+host="${1:?host is required}"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+actual_host="$(scutil --get LocalHostName)"
+if [[ "$actual_host" != "$host" ]]; then
+  echo "Refusing to apply $host on $actual_host." >&2
+  exit 1
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Refusing to apply from a dirty Git worktree." >&2
+  exit 1
+fi
+
+if [[ ! -x result/sw/bin/darwin-rebuild ]]; then
+  echo "Missing result/sw/bin/darwin-rebuild; run 'just build' first." >&2
+  exit 1
+fi
+
+sudo result/sw/bin/darwin-rebuild switch --flake ".#$host"

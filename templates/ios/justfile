@@ -1,0 +1,17 @@
+set default-list := true
+
+bootstrap:
+    bundle config set --local path vendor/bundle
+    bundle install
+
+generate:
+    xcodegen generate
+
+check:
+    bundle exec fastlane lint
+
+test:
+    bundle exec fastlane test
+
+deploy:
+    op run --env-file=.env.op -- bundle exec fastlane release
