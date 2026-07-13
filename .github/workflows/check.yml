@@ -15,9 +15,14 @@ concurrency:
 
 jobs:
   darwin:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Configure private agent-config access
+        env:
+          AGENT_CONFIG_SSH_KEY: ${{ secrets.AGENT_CONFIG_SSH_KEY }}
+        run: scripts/setup-agent-config-ssh
       - name: Install Lix
         uses: samueldr/lix-gha-installer-action@8dc19fbd6451fa106a68ecb2dafeeeb90dff3a29
       - name: Check repository and project templates
@@ -26,6 +31,7 @@ jobs:
         run: nix build .#darwinConfigurations.tinoMac-mini.system
 
   linux-home-manager:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +43,10 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+      - name: Configure private agent-config access
+        env:
+          AGENT_CONFIG_SSH_KEY: ${{ secrets.AGENT_CONFIG_SSH_KEY }}
+        run: scripts/setup-agent-config-ssh
       - name: Install Lix
         uses: samueldr/lix-gha-installer-action@8dc19fbd6451fa106a68ecb2dafeeeb90dff3a29
       - name: Build Home Manager activation

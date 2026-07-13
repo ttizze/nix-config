@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     agent-config = {
-      url = "github:ttizze/agent-config";
+      url = "git+ssh://git@github.com/ttizze/agent-config.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

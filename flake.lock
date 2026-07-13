@@ -7,17 +7,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1783956007,
-        "narHash": "sha256-6tpgGXOQUjJf/M/bvrW2m76sjShFzs/9HMW2rhDuvM4=",
-        "owner": "ttizze",
-        "repo": "agent-config",
-        "rev": "9448cce37fe9579069998e9a16438bda072ee490",
-        "type": "github"
+        "lastModified": 1783958491,
+        "narHash": "sha256-Q1+nJvAxpwenAtzu+OBniDYG/68cszsLeBKScuvLQE4=",
+        "ref": "main",
+        "rev": "c3f7843f479096398445a1efd7005bc20c0f7a2c",
+        "revCount": 7,
+        "type": "git",
+        "url": "ssh://git@github.com/ttizze/agent-config.git"
       },
       "original": {
-        "owner": "ttizze",
-        "repo": "agent-config",
-        "type": "github"
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@github.com/ttizze/agent-config.git"
       }
     },
     "brew-src": {

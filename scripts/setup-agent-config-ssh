@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${AGENT_CONFIG_SSH_KEY:?AGENT_CONFIG_SSH_KEY is required}"
+
+ssh_dir="${HOME:?}/.ssh"
+key_path="$ssh_dir/agent-config-actions"
+umask 077
+install -d -m 700 "$ssh_dir"
+printf '%s\n' "$AGENT_CONFIG_SSH_KEY" >"$key_path"
+
+cat >"$ssh_dir/known_hosts" <<'EOF'
+github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+EOF
+
+cat >"$ssh_dir/config" <<EOF
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile $key_path
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+EOF

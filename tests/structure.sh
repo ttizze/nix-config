@@ -9,11 +9,27 @@ test -f README.md
 test -f .github/workflows/check.yml
 test -x tests/secrets.sh
 test -x tests/templates.sh
+test -x scripts/setup-agent-config-ssh
+grep -Fq 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' scripts/setup-agent-config-ssh
+if grep -Fq 'ssh-keyscan' scripts/setup-agent-config-ssh; then
+  echo 'setup-agent-config-ssh must use the pinned GitHub host key' >&2
+  exit 1
+fi
 grep -Fq 'bash tests/secrets.sh' justfile
 grep -Fq 'bash tests/templates.sh' justfile
 grep -Fq 'ubuntu-24.04-arm' .github/workflows/check.yml
 grep -Fq 'tt@linux-aarch64' .github/workflows/check.yml
 grep -Fq 'tt@linux-x86_64' .github/workflows/check.yml
+grep -Fq 'git+ssh://git@github.com/ttizze/agent-config.git?ref=main' flake.nix
+# shellcheck disable=SC2016 # This is a literal GitHub Actions expression.
+test "$(grep -Fc 'AGENT_CONFIG_SSH_KEY: ${{ secrets.AGENT_CONFIG_SSH_KEY }}' .github/workflows/check.yml)" -eq 2
+test "$(grep -Fc "github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository" .github/workflows/check.yml)" -eq 2
+jq -e '
+  .nodes["agent-config"].locked.type == "git" and
+  .nodes["agent-config"].locked.url == "ssh://git@github.com/ttizze/agent-config.git" and
+  .nodes["agent-config"].original.type == "git" and
+  .nodes["agent-config"].original.ref == "main"
+' flake.lock >/dev/null
 
 for template in minimal bun node-pnpm python-uv ios; do
   test -f "templates/$template/flake.nix"
