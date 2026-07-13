@@ -124,7 +124,7 @@ Shift-Command-3 and Shift-Command-4 add Control so static screenshots go to the 
 - custom skills and their safe scripts;
 - a Home Manager module that links those files into the user home.
 
-Device IDs, Apple team IDs, build IDs, contact values, authentication files, sessions, caches, and project trust state are excluded. Machine integration waits for a stable remote; the Nix repository does not embed an absolute local path.
+Device IDs, Apple team IDs, build IDs, contact values, authentication files, sessions, caches, and project trust state are excluded. `nix-config` pins its public flake and imports the exported Home Manager module on macOS and Linux; no absolute local path is embedded.
 
 ## Activation and rollback
 

@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    agent-config = {
+      url = "github:ttizze/agent-config";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";

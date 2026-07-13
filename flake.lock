@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "agent-config": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783956007,
+        "narHash": "sha256-6tpgGXOQUjJf/M/bvrW2m76sjShFzs/9HMW2rhDuvM4=",
+        "owner": "ttizze",
+        "repo": "agent-config",
+        "rev": "9448cce37fe9579069998e9a16438bda072ee490",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ttizze",
+        "repo": "agent-config",
+        "type": "github"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -127,6 +147,7 @@
     },
     "root": {
       "inputs": {
+        "agent-config": "agent-config",
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",

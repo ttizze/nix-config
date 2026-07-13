@@ -10,7 +10,7 @@ Reproducible configuration for `tt` on the Apple Silicon Mac `tinoMac-mini`, plu
 - Homebrew is used for declared macOS applications and the reviewed `blueutil` formula exception.
 - Project runtimes and deployment tools belong to each project.
 - Secrets remain in 1Password and are injected per process with `op run`.
-- Stable Codex and Claude instructions and custom skills live in the separate `ttizze/agent-config` repository.
+- Stable Codex and Claude instructions and custom skills come from the pinned `ttizze/agent-config` flake.
 
 Existing unmanaged applications are not removed automatically. Homebrew cleanup is intentionally `none`, and normal activation never upgrades casks.
 

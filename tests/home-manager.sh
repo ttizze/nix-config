@@ -7,6 +7,7 @@ cd "$repo_root"
 config='.#darwinConfigurations.tinoMac-mini.config.home-manager.users.tt'
 
 nix flake metadata --json | jq -e '.locks.nodes | has("hermes-agent") | not' >/dev/null
+nix flake metadata --json | jq -e '.locks.nodes | has("agent-config")' >/dev/null
 
 nix eval --json "$config.programs.zsh.enable" | jq -e '. == true' >/dev/null
 nix eval --json "$config.programs.starship.enable" | jq -e '. == true' >/dev/null
@@ -34,6 +35,10 @@ nix eval --json "$config.home.file" --apply 'files: builtins.attrNames files' |
   jq -e '
     any(.[]; endswith("/.config/karabiner/karabiner.json")) and
     any(.[]; endswith("/.config/zed/settings.json")) and
+    any(.[]; endswith(".codex/keybindings.json")) and
+    any(.[]; endswith(".codex/rules/default.rules")) and
+    any(.[]; endswith(".codex/skills/use-1password-profile")) and
+    any(.[]; endswith(".claude/settings.json")) and
     all(.[]; endswith("/.p10k.zsh") | not) and
     all(.[]; endswith("/.wezterm.lua") | not)
   ' >/dev/null

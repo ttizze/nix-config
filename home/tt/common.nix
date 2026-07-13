@@ -1,6 +1,7 @@
-{ username, ... }:
+{ inputs, username, ... }:
 {
   imports = [
+    inputs.agent-config.homeManagerModules.default
     ../../modules/home/packages.nix
     ../../modules/home/shell.nix
     ../../modules/home/git.nix
