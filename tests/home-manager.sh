@@ -11,3 +11,5 @@ nix eval --json .#darwinConfigurations.tinoMac-mini.config.home-manager.users.tt
 nix eval --json .#darwinConfigurations.tinoMac-mini.config.home-manager.users.tt.programs.git.enable | jq -e '. == true' >/dev/null
 nix eval --json .#darwinConfigurations.tinoMac-mini.config.home-manager.users.tt.programs.ssh.includes | jq -e 'index("~/.ssh/1Password/config") and index("~/.ssh/config.local")' >/dev/null
 nix eval --raw .#darwinConfigurations.tinoMac-mini.config.home-manager.users.tt.home.sessionVariables.SSH_AUTH_SOCK | grep -Fqx '/Users/tt/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
+nix eval --raw '.#homeConfigurations."tt@linux-aarch64".activationPackage.drvPath' >/dev/null
+nix eval --raw '.#homeConfigurations."tt@linux-x86_64".activationPackage.drvPath' >/dev/null
