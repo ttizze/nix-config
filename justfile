@@ -9,6 +9,7 @@ check:
     bash tests/secrets.sh
     bash tests/eval.sh
     bash tests/home-manager.sh
+    bash tests/packages.sh
     bash tests/darwin.sh
     bash tests/structure.sh
     bash tests/templates.sh

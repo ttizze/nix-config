@@ -2,6 +2,7 @@
 {
   home.packages = with pkgs; [
     claude-code
+    circleback-cli
     codex
     curl
     dcg

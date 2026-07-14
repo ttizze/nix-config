@@ -1,0 +1,8 @@
+{
+  "name": "circleback-cli-nix-wrapper",
+  "version": "0.2.2",
+  "private": true,
+  "dependencies": {
+    "@circleback/cli": "0.2.2"
+  }
+}

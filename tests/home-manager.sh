@@ -22,6 +22,7 @@ nix eval --json "$config.home.packages" --apply 'packages: map (package: package
   jq -e '
     any(.[]; startswith("claude-code-")) and
     any(.[]; startswith("codex-")) and
+    any(.[]; startswith("circleback-cli-")) and
     any(.[]; startswith("dcg-")) and
     any(.[]; startswith("gnupg-")) and
     any(.[]; startswith("pinentry-mac-")) and
@@ -40,10 +41,12 @@ nix eval --json "$config.home.file" --apply 'files: builtins.attrNames files' |
     any(.[]; endswith(".codex/skills/use-1password-profile")) and
     any(.[]; endswith(".codex/skills/manage-project-environments")) and
     any(.[]; endswith(".codex/skills/turso-cli-cloudflare")) and
+    any(.[]; endswith(".codex/skills/use-circleback-context")) and
     any(.[]; endswith(".claude/settings.json")) and
     any(.[]; endswith(".claude/skills/use-1password-profile")) and
     any(.[]; endswith(".claude/skills/manage-project-environments")) and
     any(.[]; endswith(".claude/skills/turso-cli-cloudflare")) and
+    any(.[]; endswith(".claude/skills/use-circleback-context")) and
     all(.[]; endswith("/.p10k.zsh") | not) and
     all(.[]; endswith("/.wezterm.lua") | not)
   ' >/dev/null
