@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+test "$1" = '-fsSL'
+url="$2"
+test "$3" = '-o'
+output="$4"
+
+printf '%s\n' "$url" >>"$AGMSG_TEST_CURL_LOG"
+cp "$AGMSG_TEST_SETUP_FIXTURE" "$output"

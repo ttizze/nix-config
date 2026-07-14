@@ -5,7 +5,8 @@ host := "tinoMac-mini"
 
 # Run repository tests and flake checks.
 check:
-    shellcheck scripts/* tests/*.sh
+    shellcheck scripts/* tests/*.sh tests/fixtures/agmsg/*
+    bash tests/agmsg.sh
     bash tests/secrets.sh
     bash tests/eval.sh
     bash tests/home-manager.sh
@@ -39,6 +40,14 @@ update input="":
 # Roll back to the previous nix-darwin generation.
 rollback:
     scripts/rollback
+
+# Install agmsg from its official main branch.
+agmsg-install:
+    scripts/agmsg install
+
+# Update an existing agmsg installation from its official main branch.
+agmsg-update:
+    scripts/agmsg update
 
 # Explicitly update declared Homebrew casks; normal apply never upgrades them.
 apps-update:

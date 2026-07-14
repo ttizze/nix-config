@@ -9,7 +9,11 @@ test -f README.md
 test -f .github/workflows/check.yml
 test -x tests/secrets.sh
 test -x tests/templates.sh
+test -x tests/agmsg.sh
 test -x scripts/setup-agent-config-ssh
+test -x scripts/agmsg
+test -x tests/fixtures/agmsg/curl
+test -x tests/fixtures/agmsg/setup.sh
 test -f pkgs/circleback-cli/default.nix
 test -f pkgs/circleback-cli/package.json
 test -f pkgs/circleback-cli/package-lock.json
@@ -19,6 +23,7 @@ if grep -Fq 'ssh-keyscan' scripts/setup-agent-config-ssh; then
   exit 1
 fi
 grep -Fq 'bash tests/secrets.sh' justfile
+grep -Fq 'bash tests/agmsg.sh' justfile
 grep -Fq 'bash tests/packages.sh' justfile
 grep -Fq 'bash tests/templates.sh' justfile
 grep -Fq 'ubuntu-24.04-arm' .github/workflows/check.yml
@@ -72,7 +77,7 @@ done
 nix eval --json .#templates --apply builtins.attrNames |
   jq -e '. == ["bun", "default", "ios", "minimal", "node-pnpm", "python-uv"]' >/dev/null
 
-for recipe in check build diff apply update rollback; do
+for recipe in check build diff apply update rollback agmsg-install agmsg-update; do
   grep -Eq "^${recipe}([[:space:]].*)?:" justfile
 done
 

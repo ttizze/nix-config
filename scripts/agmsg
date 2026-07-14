@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo 'Usage: scripts/agmsg <install|update>' >&2
+}
+
+if [[ $# -ne 1 ]]; then
+  usage
+  exit 2
+fi
+
+case "$1" in
+  install | update) action="$1" ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
+
+setup="$(mktemp "${TMPDIR:-/tmp}/agmsg-setup.XXXXXX")"
+trap 'rm -f "$setup"' EXIT
+
+curl -fsSL 'https://raw.githubusercontent.com/fujibee/agmsg/main/setup.sh' -o "$setup"
+
+if [[ "$action" = update ]]; then
+  bash "$setup" --update
+else
+  bash "$setup"
+fi
