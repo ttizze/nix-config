@@ -37,6 +37,8 @@ for template in minimal bun node-pnpm python-uv ios; do
   test -f "templates/$template/.env.op"
   test -f "templates/$template/justfile"
   test -f "templates/$template/AGENTS.md"
+  test -f "templates/$template/CLAUDE.md"
+  grep -Fxq '@AGENTS.md' "templates/$template/CLAUDE.md"
 done
 
 test -f templates/bun/package.json

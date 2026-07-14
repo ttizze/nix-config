@@ -38,7 +38,12 @@ nix eval --json "$config.home.file" --apply 'files: builtins.attrNames files' |
     any(.[]; endswith(".codex/keybindings.json")) and
     any(.[]; endswith(".codex/rules/default.rules")) and
     any(.[]; endswith(".codex/skills/use-1password-profile")) and
+    any(.[]; endswith(".codex/skills/manage-project-environments")) and
+    any(.[]; endswith(".codex/skills/turso-cli-cloudflare")) and
     any(.[]; endswith(".claude/settings.json")) and
+    any(.[]; endswith(".claude/skills/use-1password-profile")) and
+    any(.[]; endswith(".claude/skills/manage-project-environments")) and
+    any(.[]; endswith(".claude/skills/turso-cli-cloudflare")) and
     all(.[]; endswith("/.p10k.zsh") | not) and
     all(.[]; endswith("/.wezterm.lua") | not)
   ' >/dev/null
