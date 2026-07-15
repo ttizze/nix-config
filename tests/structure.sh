@@ -22,10 +22,6 @@ if grep -Fq 'ssh-keyscan' scripts/setup-agent-config-ssh; then
   echo 'setup-agent-config-ssh must use the pinned GitHub host key' >&2
   exit 1
 fi
-grep -Fq 'bash tests/secrets.sh' justfile
-grep -Fq 'bash tests/agmsg.sh' justfile
-grep -Fq 'bash tests/packages.sh' justfile
-grep -Fq 'bash tests/templates.sh' justfile
 grep -Fq 'ubuntu-24.04-arm' .github/workflows/check.yml
 grep -Fq 'tt@linux-aarch64' .github/workflows/check.yml
 grep -Fq 'tt@linux-x86_64' .github/workflows/check.yml

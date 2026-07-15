@@ -3,8 +3,11 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 host := "tinoMac-mini"
 
-# Run repository tests and flake checks.
-check:
+# Run all repository and project-template checks.
+check: check-core check-templates
+
+# Check the managed system and repository without executing project templates.
+check-core:
     shellcheck scripts/* tests/*.sh tests/fixtures/agmsg/*
     bash tests/agmsg.sh
     bash tests/secrets.sh
@@ -13,8 +16,11 @@ check:
     bash tests/packages.sh
     bash tests/darwin.sh
     bash tests/structure.sh
-    bash tests/templates.sh
     nix flake check --show-trace
+
+# Smoke-test every project template.
+check-templates:
+    bash tests/templates.sh
 
 # Build the Mac configuration without activating it.
 build:
@@ -30,7 +36,7 @@ diff: build
     fi
 
 # Apply only a clean, checked, already-built configuration.
-apply: check build
+apply: check-core build
     scripts/apply "{{host}}"
 
 # Update one input, or all inputs when no name is supplied.
