@@ -48,6 +48,12 @@ for template in minimal bun node-pnpm python-uv ios; do
   test -f "templates/$template/AGENTS.md"
   test -f "templates/$template/CLAUDE.md"
   grep -Fxq '@AGENTS.md' "templates/$template/CLAUDE.md"
+  grep -Fq 'This repository is Nix-managed.' "templates/$template/AGENTS.md"
+  grep -Fq 'Do not run project toolchain commands in a bare shell.' "templates/$template/AGENTS.md"
+  # shellcheck disable=SC2016
+  grep -Fq 'Do not assume `.envrc` is loaded in agent or non-interactive shells.' "templates/$template/AGENTS.md"
+  # shellcheck disable=SC2016
+  grep -Fq 'When `IN_NIX_SHELL` is unset, run project commands with `nix develop --command <command>`.' "templates/$template/AGENTS.md"
 done
 
 test -f templates/bun/package.json
