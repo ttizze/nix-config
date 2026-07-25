@@ -22,6 +22,7 @@ nix eval --json "$config.home.packages" --apply 'packages: map (package: package
   jq -e '
     any(.[]; startswith("claude-code-")) and
     any(.[]; startswith("codex-")) and
+    any(.[]; . == "codex-acp-1.1.7") and
     any(.[]; startswith("circleback-cli-")) and
     any(.[]; startswith("dcg-")) and
     any(.[]; startswith("gnupg-")) and
