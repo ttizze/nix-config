@@ -51,6 +51,7 @@
       forAllSystems = nixpkgs.lib.genAttrs systems;
       overlay = final: _prev: {
         circleback-cli = final.callPackage ./pkgs/circleback-cli { };
+        codex-acp = final.callPackage ./pkgs/codex-acp { };
         dcg = final.callPackage ./pkgs/dcg.nix { };
       };
       allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
@@ -100,7 +101,7 @@
           pkgs = mkPkgs system;
         in
         {
-          inherit (pkgs) circleback-cli dcg;
+          inherit (pkgs) circleback-cli codex-acp dcg;
           default = pkgs.dcg;
         }
       );
@@ -112,6 +113,7 @@
         in
         {
           circleback-cli = pkgs.circleback-cli;
+          codex-acp = pkgs.codex-acp;
           dcg = pkgs.dcg;
         }
       );

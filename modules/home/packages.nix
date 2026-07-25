@@ -4,6 +4,7 @@
     claude-code
     circleback-cli
     codex
+    codex-acp
     curl
     dcg
     eza
