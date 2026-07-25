@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
+    claude-agent-acp
     claude-code
     circleback-cli
     codex

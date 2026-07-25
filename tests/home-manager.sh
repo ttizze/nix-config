@@ -21,6 +21,7 @@ nix eval --raw "$config.home.sessionVariables.SSH_AUTH_SOCK" | grep -Fqx '/Users
 nix eval --json "$config.home.packages" --apply 'packages: map (package: package.name) packages' |
   jq -e '
     any(.[]; startswith("claude-code-")) and
+    any(.[]; . == "claude-agent-acp-0.52.0") and
     any(.[]; startswith("codex-")) and
     any(.[]; . == "codex-acp-1.1.7") and
     any(.[]; startswith("circleback-cli-")) and

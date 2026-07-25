@@ -101,7 +101,12 @@
           pkgs = mkPkgs system;
         in
         {
-          inherit (pkgs) circleback-cli codex-acp dcg;
+          inherit (pkgs)
+            circleback-cli
+            claude-agent-acp
+            codex-acp
+            dcg
+            ;
           default = pkgs.dcg;
         }
       );
@@ -113,6 +118,7 @@
         in
         {
           circleback-cli = pkgs.circleback-cli;
+          claude-agent-acp = pkgs.claude-agent-acp;
           codex-acp = pkgs.codex-acp;
           dcg = pkgs.dcg;
         }
