@@ -38,6 +38,7 @@ nix eval --json "$config.homebrew.casks" |
   jq -e 'map(.name) == [
     "1password",
     "1password-cli",
+    "aerospace",
     "chatgpt",
     "claude",
     "cmux",
@@ -58,4 +59,6 @@ nix eval --json "$config.system.defaults.CustomUserPreferences.\"com.cmuxterm.ap
     .confirmQuit == "never" and
     .appearanceMode == "system" and
     ."rightSidebar.mode" == "files"
-  ' >/dev/null
+' >/dev/null
+nix eval --json "$config.homebrew.taps" |
+  jq -e 'map(.name) | index("nikitabobko/homebrew-tap") != null' >/dev/null

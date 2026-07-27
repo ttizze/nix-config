@@ -37,6 +37,7 @@ nix eval --json "$config.home.packages" --apply 'packages: map (package: package
 nix eval --json "$config.home.file" --apply 'files: builtins.attrNames files' |
   jq -e '
     any(.[]; endswith("/.config/karabiner/karabiner.json")) and
+    any(.[]; endswith("/.config/aerospace/aerospace.toml")) and
     any(.[]; endswith("/.config/zed/settings.json")) and
     any(.[]; endswith(".codex/keybindings.json")) and
     any(.[]; endswith(".codex/rules/default.rules")) and

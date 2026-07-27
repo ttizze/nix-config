@@ -31,6 +31,11 @@
       flake = false;
     };
 
+    homebrew-aerospace = {
+      url = "github:nikitabobko/homebrew-tap";
+      flake = false;
+    };
+
   };
 
   outputs =
