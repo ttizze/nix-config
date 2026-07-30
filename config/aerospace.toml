@@ -8,9 +8,15 @@ auto-reload-config = true
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 default-root-container-layout = "tiles"
-default-root-container-orientation = "auto"
+default-root-container-orientation = "horizontal"
 on-focused-monitor-changed = ["move-mouse monitor-lazy-center"]
 persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+# Keep the browser and ChatGPT together as a two-column workspace.
+on-window-detected = [
+    { if = "test %{app-bundle-id} = com.google.Chrome", run = ["move-node-to-workspace 2", "move left"] },
+    { if = "test %{app-bundle-id} = com.openai.codex", run = ["move-node-to-workspace 2", "move right"] },
+]
 
 gaps.inner.horizontal = 8
 gaps.inner.vertical = 8
