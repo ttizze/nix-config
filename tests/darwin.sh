@@ -38,7 +38,7 @@ nix eval --json "$config.homebrew.casks" |
   jq -e 'map(.name) == [
     "1password",
     "1password-cli",
-    "aerospace",
+    "nikitabobko/tap/aerospace",
     "chatgpt",
     "claude",
     "cmux",

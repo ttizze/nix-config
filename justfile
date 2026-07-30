@@ -58,4 +58,4 @@ agmsg-update:
 # Explicitly update declared Homebrew casks; normal apply never upgrades them.
 apps-update:
     brew update
-    brew upgrade --cask 1password 1password-cli aerospace chatgpt claude cmux discord google-chrome karabiner-elements logi-options+ zed
+    brew upgrade --cask 1password 1password-cli nikitabobko/tap/aerospace chatgpt claude cmux discord google-chrome karabiner-elements logi-options+ zed

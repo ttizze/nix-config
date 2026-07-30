@@ -20,7 +20,10 @@
     casks = [
       "1password"
       "1password-cli"
-      "aerospace"
+      {
+        name = "nikitabobko/tap/aerospace";
+        trusted = true;
+      }
       "chatgpt"
       "claude"
       "cmux"
