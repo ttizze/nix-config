@@ -25,6 +25,7 @@ NATIVE_BASE = os.environ.get("CODEX_NATIVE_BASE_URL", "https://chatgpt.com/backe
 ZEN_BASE = os.environ.get("OPENCODE_ZEN_BASE_URL", "https://opencode.ai/zen/v1").rstrip("/")
 ZEN_PREFIX = "opencode-zen/"
 KEYCHAIN_SERVICE = "codex-opencode-zen"
+ZEN_USER_AGENT = "codex-model-router/0.1"
 MODELS = (
     ("deepseek-v4-pro", "OpenCode DeepSeek V4 Pro", "DeepSeek V4 Pro through OpenCode Zen."),
     ("deepseek-v4-flash", "OpenCode DeepSeek V4 Flash", "DeepSeek V4 Flash through OpenCode Zen."),
@@ -343,7 +344,8 @@ def chat_to_response_events(chat: dict[str, Any], model: str, freeform: set[str]
 
 
 def post_json(url: str, body: dict[str, Any], headers: dict[str, str]) -> tuple[int, dict[str, str], bytes]:
-    request = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
+    request_headers = {**headers, "User-Agent": ZEN_USER_AGENT}
+    request = urllib.request.Request(url, data=json.dumps(body).encode(), headers=request_headers, method="POST")
     try:
         with urllib.request.urlopen(request, timeout=600) as response:
             return response.status, dict(response.headers.items()), response.read()

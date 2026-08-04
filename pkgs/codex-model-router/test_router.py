@@ -2,12 +2,23 @@ import json
 import compression.zstd
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import router
 
 
 class RouterTests(unittest.TestCase):
+    def test_zen_requests_use_non_blocked_user_agent(self):
+        response = mock.MagicMock()
+        response.status = 200
+        response.headers.items.return_value = []
+        response.read.return_value = b'{}'
+        response.__enter__.return_value = response
+        with mock.patch.object(router.urllib.request, "urlopen", return_value=response) as urlopen:
+            router.post_json("https://opencode.ai/zen/v1/chat/completions", {}, {})
+        self.assertEqual(urlopen.call_args.args[0].get_header("User-agent"), router.ZEN_USER_AGENT)
+
     def test_runtime_can_decode_codex_zstd_requests(self):
         payload = b'{"model":"gpt-5.6-terra"}'
         self.assertEqual(compression.zstd.decompress(compression.zstd.compress(payload)), payload)
