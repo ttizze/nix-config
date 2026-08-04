@@ -58,6 +58,7 @@
         circleback-cli = final.callPackage ./pkgs/circleback-cli { };
         codex-acp = final.callPackage ./pkgs/codex-acp { };
         dcg = final.callPackage ./pkgs/dcg.nix { };
+        opencodex = final.callPackage ./pkgs/opencodex { };
       };
       allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
       mkPkgs =
@@ -111,6 +112,7 @@
             claude-agent-acp
             codex-acp
             dcg
+            opencodex
             ;
           default = pkgs.dcg;
         }
@@ -126,6 +128,7 @@
           claude-agent-acp = pkgs.claude-agent-acp;
           codex-acp = pkgs.codex-acp;
           dcg = pkgs.dcg;
+          opencodex = pkgs.opencodex;
         }
       );
 
