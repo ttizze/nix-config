@@ -57,6 +57,7 @@
       overlay = final: _prev: {
         circleback-cli = final.callPackage ./pkgs/circleback-cli { };
         codex-acp = final.callPackage ./pkgs/codex-acp { };
+        codex-model-router = final.callPackage ./pkgs/codex-model-router { };
         dcg = final.callPackage ./pkgs/dcg.nix { };
       };
       allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
@@ -110,6 +111,7 @@
             circleback-cli
             claude-agent-acp
             codex-acp
+            codex-model-router
             dcg
             ;
           default = pkgs.dcg;
@@ -125,6 +127,7 @@
           circleback-cli = pkgs.circleback-cli;
           claude-agent-acp = pkgs.claude-agent-acp;
           codex-acp = pkgs.codex-acp;
+          codex-model-router = pkgs.codex-model-router;
           dcg = pkgs.dcg;
         }
       );
