@@ -7,7 +7,6 @@ cd "$repo_root"
 circleback="$(nix build .#circleback-cli --no-link --print-out-paths)"
 claude_agent_acp="$(nix build .#claude-agent-acp --no-link --print-out-paths)"
 codex_acp="$(nix build .#codex-acp --no-link --print-out-paths)"
-opencodex="$(nix build .#opencodex --no-link --print-out-paths)"
 
 test "$("$circleback/bin/cb" --version)" = '0.2.2'
 help="$("$circleback/bin/circleback" --help)"
@@ -24,8 +23,5 @@ test "$("$codex_acp/bin/codex-acp" --version)" = '@agentclientprotocol/codex-acp
 test ! -e "$codex_acp/bin/node"
 test ! -e "$codex_acp/bin/npm"
 test ! -e "$codex_acp/bin/npx"
-
-test "$("$opencodex/bin/ocx" --version)" = 'opencodex 2.10.0'
-test "$("$opencodex/bin/opencodex" --version)" = 'opencodex 2.10.0'
 
 echo 'package checks passed'

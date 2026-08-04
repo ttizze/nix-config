@@ -26,7 +26,7 @@ nix eval --json "$config.home.packages" --apply 'packages: map (package: package
     any(.[]; . == "codex-acp-1.1.7") and
     any(.[]; startswith("circleback-cli-")) and
     any(.[]; startswith("dcg-")) and
-    any(.[]; . == "opencodex-2.10.0") and
+    all(.[]; startswith("opencodex-") | not) and
     any(.[]; startswith("gnupg-")) and
     any(.[]; startswith("pinentry-mac-")) and
     all(.[];

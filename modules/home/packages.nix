@@ -14,7 +14,6 @@
     gnupg
     htop
     jq
-    opencodex
     ripgrep
     yq-go
   ];
