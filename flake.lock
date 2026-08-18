@@ -38,6 +38,24 @@
         "type": "github"
       }
     },
+    "codex-app-list-fix-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787068060,
+        "narHash": "sha256-tX56u2po5FGwxRHHllCFZpnz2JwMyGF4EERMW56y/NI=",
+        "ref": "agent/cache-app-list-response-0.147.0-alpha.6.5",
+        "rev": "14964d5fdd000cea72b3403cd912c0661b0a025d",
+        "revCount": 8847,
+        "type": "git",
+        "url": "https://github.com/ttizze/codex"
+      },
+      "original": {
+        "ref": "agent/cache-app-list-response-0.147.0-alpha.6.5",
+        "rev": "14964d5fdd000cea72b3403cd912c0661b0a025d",
+        "type": "git",
+        "url": "https://github.com/ttizze/codex"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -165,6 +183,7 @@
     "root": {
       "inputs": {
         "agent-config": "agent-config",
+        "codex-app-list-fix-src": "codex-app-list-fix-src",
         "home-manager": "home-manager",
         "homebrew-aerospace": "homebrew-aerospace",
         "homebrew-cask": "homebrew-cask",

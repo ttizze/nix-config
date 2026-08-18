@@ -9,6 +9,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    codex-app-list-fix-src = {
+      url = "git+https://github.com/ttizze/codex?ref=agent/cache-app-list-response-0.147.0-alpha.6.5&rev=14964d5fdd000cea72b3403cd912c0661b0a025d";
+      flake = false;
+    };
+
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -57,6 +62,9 @@
       overlay = final: _prev: {
         circleback-cli = final.callPackage ./pkgs/circleback-cli { };
         codex-acp = final.callPackage ./pkgs/codex-acp { };
+        codex-app-list-fix = final.callPackage ./pkgs/codex-app-list-fix {
+          codexAppListFixSrc = inputs.codex-app-list-fix-src;
+        };
         codex-model-router = final.callPackage ./pkgs/codex-model-router { };
         dcg = final.callPackage ./pkgs/dcg.nix { };
       };
@@ -116,6 +124,9 @@
             ;
           default = pkgs.dcg;
         }
+        // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {
+          inherit (pkgs) codex-app-list-fix;
+        }
       );
 
       checks = forAllSystems (
@@ -129,6 +140,9 @@
           codex-acp = pkgs.codex-acp;
           codex-model-router = pkgs.codex-model-router;
           dcg = pkgs.dcg;
+        }
+        // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {
+          codex-app-list-fix = pkgs.codex-app-list-fix;
         }
       );
 

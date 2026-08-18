@@ -28,4 +28,20 @@
       StandardErrorPath = "/Users/${username}/Library/Logs/codex-model-router.error.log";
     };
   };
+
+  # ChatGPT Desktop reads this override before starting its bundled app-server.
+  # Keep the patched binary isolated from the normal command-line Codex package.
+  launchd.agents.codex-cli-path = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/bin/launchctl"
+        "setenv"
+        "CODEX_CLI_PATH"
+        "${pkgs.codex-app-list-fix}/bin/codex"
+      ];
+      RunAtLoad = true;
+      ProcessType = "Background";
+    };
+  };
 }
