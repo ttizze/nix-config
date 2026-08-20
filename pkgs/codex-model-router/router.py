@@ -26,6 +26,10 @@ ZEN_BASE = os.environ.get("OPENCODE_ZEN_BASE_URL", "https://opencode.ai/zen/v1")
 ZEN_PREFIX = "opencode-zen/"
 KEYCHAIN_SERVICE = "codex-opencode-zen"
 ZEN_USER_AGENT = "codex-model-router/0.1"
+COMPACTION_PROMPT = """Create a concise handoff summary for another coding agent that will resume this task.
+
+Include current progress, key decisions, constraints, user preferences, remaining work, and critical references. Do not call tools. Return only the handoff summary."""
+SUMMARY_PREFIX = "Another language model started to solve this problem and produced a summary of its thinking process. You also have access to the state of the tools that were used by that language model. Use this to build on the work that has already been done and avoid duplicating work. Here is the summary produced by the other language model, use the information in this summary to assist with your own analysis:"
 MODELS = (
     ("deepseek-v4-pro", "OpenCode DeepSeek V4 Pro", "DeepSeek V4 Pro through OpenCode Zen."),
     ("deepseek-v4-flash", "OpenCode DeepSeek V4 Flash", "DeepSeek V4 Flash through OpenCode Zen."),
@@ -248,6 +252,30 @@ def responses_to_chat(body: dict[str, Any]) -> tuple[dict[str, Any], set[str], s
     return chat, freeform, tool_search, namespaces
 
 
+def compact_to_chat(body: dict[str, Any]) -> dict[str, Any]:
+    chat, _, _, _ = responses_to_chat(body)
+    chat.pop("tools", None)
+    chat.pop("parallel_tool_calls", None)
+    chat.pop("tool_choice", None)
+    chat["messages"].append({"role": "user", "content": COMPACTION_PROMPT})
+    return chat
+
+
+def chat_to_compact_response(chat: dict[str, Any]) -> dict[str, Any]:
+    choices = chat.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise ValueError("upstream response has no choices")
+    message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+    summary = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(summary, str) or not summary.strip():
+        raise ValueError("upstream compaction response has no summary")
+    return {"output": [{
+        "type": "message",
+        "role": "user",
+        "content": [{"type": "input_text", "text": f"{SUMMARY_PREFIX}\n{summary.strip()}"}],
+    }]}
+
+
 def usage(raw: Any) -> dict[str, Any]:
     raw = raw if isinstance(raw, dict) else {}
     input_tokens = int(raw.get("prompt_tokens", 0) or 0)
@@ -449,8 +477,10 @@ class RouterHandler(BaseHTTPRequestHandler):
             self.close_connection = True
 
     def route_zen(self, body: dict[str, Any], model: str) -> None:
+        if self.path == "/v1/responses/compact":
+            return self.route_zen_compact(body, model)
         if self.path != "/v1/responses":
-            return self.error(404, "OpenCode Zen only supports /v1/responses")
+            return self.error(404, "OpenCode Zen only supports /v1/responses and /v1/responses/compact")
         if model.removeprefix(ZEN_PREFIX) not in {entry[0] for entry in MODELS}:
             return self.error(400, "OpenCode Zen model is not allowed")
         try:
@@ -483,6 +513,36 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def route_zen_compact(self, body: dict[str, Any], model: str) -> None:
+        if model.removeprefix(ZEN_PREFIX) not in {entry[0] for entry in MODELS}:
+            return self.error(400, "OpenCode Zen model is not allowed")
+        try:
+            chat_body = compact_to_chat(body)
+            key = keychain_key()
+        except (ValueError, RuntimeError) as error:
+            return self.error(400, str(error))
+        status, response_headers, raw = post_json(
+            f"{ZEN_BASE}/chat/completions",
+            chat_body,
+            {"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+        )
+        if status >= 400:
+            self.send_response(status)
+            self.send_header("Content-Type", response_headers.get("Content-Type", "application/json"))
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+            return
+        try:
+            payload = json.dumps(chat_to_compact_response(json.loads(raw))).encode()
+        except (json.JSONDecodeError, ValueError) as error:
+            return self.error(502, f"invalid OpenCode Zen compaction response: {error}", "upstream_error")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)

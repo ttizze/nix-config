@@ -1,7 +1,9 @@
 import json
 import compression.zstd
 import tempfile
+import threading
 import unittest
+import urllib.request
 from unittest import mock
 from pathlib import Path
 
@@ -77,6 +79,52 @@ class RouterTests(unittest.TestCase):
         })
         self.assertEqual(chat["messages"][0]["tool_calls"][0]["function"]["arguments"], '{"input": "pwd"}')
         self.assertEqual(chat["messages"][1], {"role": "tool", "tool_call_id": "call_7", "content": "'/tmp'"})
+
+    def test_compaction_uses_chat_completion_and_returns_codex_history(self):
+        upstream_bodies = []
+
+        def fake_post_json(_url, body, _headers):
+            upstream_bodies.append(body)
+            response = {"choices": [{"message": {"content": "Progress and next steps."}}]}
+            return 200, {}, json.dumps(response).encode()
+
+        server = router.QuietThreadingHTTPServer(("127.0.0.1", 0), router.RouterHandler)
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        try:
+            payload = json.dumps({
+                "model": "opencode-zen/deepseek-v4-pro",
+                "input": [{
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Fix the bug."}],
+                }],
+                "tools": [{"type": "function", "name": "shell"}],
+            }).encode()
+            request = urllib.request.Request(
+                f"http://127.0.0.1:{server.server_port}/v1/responses/compact",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with mock.patch.object(router, "keychain_key", return_value="test-key"), \
+                 mock.patch.object(router, "post_json", side_effect=fake_post_json):
+                with urllib.request.urlopen(request, timeout=5) as response:
+                    self.assertEqual(response.status, 200)
+                    compacted = json.loads(response.read())
+        finally:
+            server.shutdown()
+            server.server_close()
+            worker.join(timeout=5)
+
+        self.assertNotIn("tools", upstream_bodies[0])
+        self.assertEqual(upstream_bodies[0]["messages"][-1]["content"], router.COMPACTION_PROMPT)
+        summary = compacted["output"][0]
+        self.assertEqual(summary["role"], "user")
+        self.assertEqual(
+            summary["content"][0]["text"],
+            f"{router.SUMMARY_PREFIX}\nProgress and next steps.",
+        )
 
 
 if __name__ == "__main__":
