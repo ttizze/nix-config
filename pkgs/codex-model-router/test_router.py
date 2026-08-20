@@ -80,6 +80,16 @@ class RouterTests(unittest.TestCase):
         self.assertEqual(chat["messages"][0]["tool_calls"][0]["function"]["arguments"], '{"input": "pwd"}')
         self.assertEqual(chat["messages"][1], {"role": "tool", "tool_call_id": "call_7", "content": "'/tmp'"})
 
+    def test_replayed_v2_compaction_becomes_summary_context(self):
+        chat, _, _, _ = router.responses_to_chat({
+            "model": "opencode-zen/deepseek-v4-pro",
+            "input": [{"type": "compaction", "encrypted_content": "Prior progress."}],
+        })
+        self.assertEqual(chat["messages"], [{
+            "role": "user",
+            "content": f"{router.SUMMARY_PREFIX}\nPrior progress.",
+        }])
+
     def test_compaction_uses_chat_completion_and_returns_codex_history(self):
         upstream_bodies = []
 
@@ -125,6 +135,56 @@ class RouterTests(unittest.TestCase):
             summary["content"][0]["text"],
             f"{router.SUMMARY_PREFIX}\nProgress and next steps.",
         )
+
+    def test_v2_compaction_trigger_returns_one_compaction_item(self):
+        upstream_bodies = []
+
+        def fake_post_json(_url, body, _headers):
+            upstream_bodies.append(body)
+            response = {"choices": [{"message": {"content": "Progress and next steps."}}]}
+            return 200, {}, json.dumps(response).encode()
+
+        server = router.QuietThreadingHTTPServer(("127.0.0.1", 0), router.RouterHandler)
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        try:
+            payload = json.dumps({
+                "model": "opencode-zen/deepseek-v4-pro",
+                "input": [
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "Fix the bug."}],
+                    },
+                    {"type": "compaction_trigger"},
+                ],
+                "tools": [{"type": "function", "name": "shell"}],
+            }).encode()
+            request = urllib.request.Request(
+                f"http://127.0.0.1:{server.server_port}/v1/responses",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with mock.patch.object(router, "keychain_key", return_value="test-key"), \
+                 mock.patch.object(router, "post_json", side_effect=fake_post_json):
+                with urllib.request.urlopen(request, timeout=5) as response:
+                    self.assertEqual(response.status, 200)
+                    stream = response.read().decode()
+        finally:
+            server.shutdown()
+            server.server_close()
+            worker.join(timeout=5)
+
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in stream.splitlines()
+            if line.startswith("data: {")
+        ]
+        output = [event["item"] for event in events if event["type"] == "response.output_item.done"]
+        self.assertEqual([item["type"] for item in output], ["compaction"])
+        self.assertEqual(output[0]["encrypted_content"], "Progress and next steps.")
+        self.assertNotIn("tools", upstream_bodies[0])
 
 
 if __name__ == "__main__":

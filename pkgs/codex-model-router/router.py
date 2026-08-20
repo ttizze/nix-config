@@ -184,6 +184,11 @@ def responses_to_chat(body: dict[str, Any]) -> tuple[dict[str, Any], set[str], s
                     "tool_call_id": item.get("call_id") or item.get("id") or "",
                     "content": text_content(item.get("output", "")),
                 })
+            elif kind in ("compaction", "compaction_summary", "context_compaction"):
+                flush_calls()
+                summary = item.get("encrypted_content")
+                if isinstance(summary, str) and summary:
+                    messages.append({"role": "user", "content": f"{SUMMARY_PREFIX}\n{summary}"})
         flush_calls()
 
     chat_tools: list[dict[str, Any]] = []
@@ -274,6 +279,58 @@ def chat_to_compact_response(chat: dict[str, Any]) -> dict[str, Any]:
         "role": "user",
         "content": [{"type": "input_text", "text": f"{SUMMARY_PREFIX}\n{summary.strip()}"}],
     }]}
+
+
+def chat_to_compaction_events(chat: dict[str, Any], model: str) -> list[tuple[str, dict[str, Any]]]:
+    choices = chat.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise ValueError("upstream response has no choices")
+    message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+    summary = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(summary, str) or not summary.strip():
+        raise ValueError("upstream compaction response has no summary")
+
+    response_id = f"resp_{uuid.uuid4().hex}"
+    item = {
+        "type": "compaction",
+        "id": f"cmp_{uuid.uuid4().hex}",
+        "encrypted_content": summary.strip(),
+    }
+    snapshot = {
+        "id": response_id,
+        "object": "response",
+        "created_at": int(time.time()),
+        "status": "in_progress",
+        "model": model,
+        "output": [],
+        "usage": None,
+    }
+    completed = {
+        **snapshot,
+        "status": "completed",
+        "output": [item],
+        "usage": usage(chat.get("usage")),
+    }
+    return [
+        ("response.created", {"type": "response.created", "sequence_number": 0, "response": snapshot}),
+        ("response.output_item.added", {
+            "type": "response.output_item.added",
+            "sequence_number": 1,
+            "output_index": 0,
+            "item": item,
+        }),
+        ("response.output_item.done", {
+            "type": "response.output_item.done",
+            "sequence_number": 2,
+            "output_index": 0,
+            "item": item,
+        }),
+        ("response.completed", {
+            "type": "response.completed",
+            "sequence_number": 3,
+            "response": completed,
+        }),
+    ]
 
 
 def usage(raw: Any) -> dict[str, Any]:
@@ -481,6 +538,12 @@ class RouterHandler(BaseHTTPRequestHandler):
             return self.route_zen_compact(body, model)
         if self.path != "/v1/responses":
             return self.error(404, "OpenCode Zen only supports /v1/responses and /v1/responses/compact")
+        raw_input = body.get("input")
+        if isinstance(raw_input, list) and any(
+            isinstance(item, dict) and item.get("type") == "compaction_trigger"
+            for item in raw_input
+        ):
+            return self.route_zen_compact_v2(body, model)
         if model.removeprefix(ZEN_PREFIX) not in {entry[0] for entry in MODELS}:
             return self.error(400, "OpenCode Zen model is not allowed")
         try:
@@ -508,6 +571,43 @@ class RouterHandler(BaseHTTPRequestHandler):
         frames = []
         for name, event in events:
             frames.append(f"event: {name}\ndata: {json.dumps(event, separators=(',', ':'))}\n\n")
+        frames.append("data: [DONE]\n\n")
+        payload = "".join(frames).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def route_zen_compact_v2(self, body: dict[str, Any], model: str) -> None:
+        if model.removeprefix(ZEN_PREFIX) not in {entry[0] for entry in MODELS}:
+            return self.error(400, "OpenCode Zen model is not allowed")
+        try:
+            chat_body = compact_to_chat(body)
+            key = keychain_key()
+        except (ValueError, RuntimeError) as error:
+            return self.error(400, str(error))
+        status, response_headers, raw = post_json(
+            f"{ZEN_BASE}/chat/completions",
+            chat_body,
+            {"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+        )
+        if status >= 400:
+            self.send_response(status)
+            self.send_header("Content-Type", response_headers.get("Content-Type", "application/json"))
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+            return
+        try:
+            events = chat_to_compaction_events(json.loads(raw), model)
+        except (json.JSONDecodeError, ValueError) as error:
+            return self.error(502, f"invalid OpenCode Zen compaction response: {error}", "upstream_error")
+        frames = [
+            f"event: {name}\ndata: {json.dumps(event, separators=(',', ':'))}\n\n"
+            for name, event in events
+        ]
         frames.append("data: [DONE]\n\n")
         payload = "".join(frames).encode()
         self.send_response(200)
