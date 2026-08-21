@@ -14,7 +14,7 @@ grep -Fq 'Search and access meetings, emails, calendar events, and more.' <<<"$h
 test ! -e "$circleback/bin/node"
 test ! -e "$circleback/bin/npm"
 
-test "$("$claude_agent_acp/bin/claude-agent-acp" --version)" = '0.52.0'
+test "$("$claude_agent_acp/bin/claude-agent-acp" --version)" = '0.69.0'
 test ! -e "$claude_agent_acp/bin/node"
 test ! -e "$claude_agent_acp/bin/npm"
 test ! -e "$claude_agent_acp/bin/npx"
