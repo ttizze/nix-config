@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787501380,
-        "narHash": "sha256-sKwwLMzecIuLHYvRsgetcj9hktO0bBJr1Bf4kNIGsQw=",
+        "lastModified": 1787548107,
+        "narHash": "sha256-CYAgUt7fF8CTlQL2WpwfFBex1bZNkpLNJ0dre3SpQbw=",
         "ref": "main",
-        "rev": "d26165ab169c2250daafc865353c24dbaff21362",
-        "revCount": 17,
+        "rev": "ff8269ec9721d94822935d31230e20f15a1d7a16",
+        "revCount": 19,
         "type": "git",
         "url": "ssh://git@github.com/ttizze/agent-config.git"
       },
