@@ -4,7 +4,6 @@
     claude-agent-acp
     claude-code
     circleback-cli
-    codex
     codex-acp
     codex-model-router
     curl

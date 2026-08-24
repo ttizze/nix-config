@@ -7,6 +7,7 @@ cd "$repo_root"
 config='.#darwinConfigurations.tinoMac-mini.config.home-manager.users.tt'
 
 nix flake metadata --json | jq -e '.locks.nodes | has("hermes-agent") | not' >/dev/null
+nix flake metadata --json | jq -e '.locks.nodes | has("codex-app-list-fix-src") | not' >/dev/null
 nix flake metadata --json | jq -e '.locks.nodes | has("agent-config")' >/dev/null
 
 nix eval --json "$config.programs.zsh.enable" | jq -e '. == true' >/dev/null
@@ -17,20 +18,14 @@ nix eval --json "$config.programs.git.enable" | jq -e '. == true' >/dev/null
 nix eval --json "$config.programs.git.settings.alias.clean-gone" | jq -e 'type == "string"' >/dev/null
 nix eval --json "$config.programs.ssh.includes" | jq -e 'index("~/.ssh/1Password/config") and index("~/.ssh/config.local")' >/dev/null
 nix eval --raw "$config.home.sessionVariables.SSH_AUTH_SOCK" | grep -Fqx '/Users/tt/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
-nix eval --json "$config.launchd.agents.codex-cli-path.config.ProgramArguments" |
-  jq -e '
-    .[0] == "/bin/launchctl" and
-    .[1] == "setenv" and
-    .[2] == "CODEX_CLI_PATH" and
-    (.[3] | endswith("/bin/codex"))
-  ' >/dev/null
-
+nix eval --json "$config.launchd.agents" --apply 'agents: builtins.attrNames agents' |
+  jq -e 'index("codex-cli-path") == null' >/dev/null
 nix eval --json "$config.home.packages" --apply 'packages: map (package: package.name) packages' |
   jq -e '
     any(.[]; startswith("claude-code-")) and
     any(.[]; . == "claude-agent-acp-0.69.0") and
     any(.[]; startswith("codex-")) and
-    any(.[]; . == "codex-acp-1.1.7") and
+    any(.[]; . == "codex-acp-1.6.2") and
     any(.[]; startswith("circleback-cli-")) and
     any(.[]; startswith("dcg-")) and
     all(.[]; startswith("opencodex-") | not) and

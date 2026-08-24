@@ -7,11 +7,11 @@
 
 buildNpmPackage rec {
   pname = "circleback-cli";
-  version = "0.2.2";
+  version = "0.3.0";
 
   src = ./.;
 
-  npmDepsHash = "sha256-/oZFTvvTqBwBUXJaSgVkNBmKQlRXSnHmLIm4qCVVQ7Y=";
+  npmDepsHash = "sha256-5DTVISy3C/xOzDQ2ZfhKtL6c4fI3MBr0xrkJOFix8Js=";
   npmFlags = [ "--ignore-scripts" ];
   dontNpmBuild = true;
 

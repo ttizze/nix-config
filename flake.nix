@@ -2,42 +2,37 @@
   description = "ttizze's reproducible macOS and Linux CLI environment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "git+https://github.com/NixOS/nixpkgs.git?ref=nixpkgs-unstable";
 
     agent-config = {
       url = "git+ssh://git@github.com/ttizze/agent-config.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    codex-app-list-fix-src = {
-      url = "git+https://github.com/ttizze/codex?ref=agent/cache-app-list-response-0.147.0-alpha.6.5&rev=14964d5fdd000cea72b3403cd912c0661b0a025d";
-      flake = false;
-    };
-
     nix-darwin = {
-      url = "github:nix-darwin/nix-darwin/master";
+      url = "git+https://github.com/nix-darwin/nix-darwin.git?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
-      url = "github:nix-community/home-manager/master";
+      url = "git+https://github.com/nix-community/home-manager.git?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    nix-homebrew.url = "git+https://github.com/zhaofengli-wip/nix-homebrew.git?ref=main";
 
     homebrew-core = {
-      url = "github:homebrew/homebrew-core";
+      url = "git+https://github.com/Homebrew/homebrew-core.git?ref=main";
       flake = false;
     };
 
     homebrew-cask = {
-      url = "github:homebrew/homebrew-cask";
+      url = "git+https://github.com/Homebrew/homebrew-cask.git?ref=main";
       flake = false;
     };
 
     homebrew-aerospace = {
-      url = "github:nikitabobko/homebrew-tap";
+      url = "git+https://github.com/nikitabobko/homebrew-tap.git?ref=main";
       flake = false;
     };
 
@@ -59,14 +54,17 @@
         "x86_64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
-      overlay = final: _prev: {
+      overlay = final: prev: {
         circleback-cli = final.callPackage ./pkgs/circleback-cli { };
         codex-acp = final.callPackage ./pkgs/codex-acp { };
-        codex-app-list-fix = final.callPackage ./pkgs/codex-app-list-fix {
-          codexAppListFixSrc = inputs.codex-app-list-fix-src;
-        };
         codex-model-router = final.callPackage ./pkgs/codex-model-router { };
         dcg = final.callPackage ./pkgs/dcg.nix { };
+        # tmux 3.7c requires an explicit jemalloc choice on macOS.
+        tmux = prev.tmux.overrideAttrs (old: {
+          configureFlags =
+            (old.configureFlags or [ ])
+            ++ final.lib.optional final.stdenv.hostPlatform.isDarwin "--disable-jemalloc";
+        });
       };
       allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
       mkPkgs =
@@ -124,9 +122,6 @@
             ;
           default = pkgs.dcg;
         }
-        // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {
-          inherit (pkgs) codex-app-list-fix;
-        }
       );
 
       checks = forAllSystems (
@@ -140,9 +135,6 @@
           codex-acp = pkgs.codex-acp;
           codex-model-router = pkgs.codex-model-router;
           dcg = pkgs.dcg;
-        }
-        // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {
-          codex-app-list-fix = pkgs.codex-app-list-fix;
         }
       );
 

@@ -5,19 +5,19 @@
 }:
 
 let
-  version = "0.6.5";
+  version = "0.12.5";
   artifacts = {
     aarch64-darwin = {
       target = "aarch64-apple-darwin";
-      hash = "sha256-JytbHz5KOtw7hsBn9cAgqibKpLcTZk9n+yrY4QQRGtw=";
+      hash = "sha256-bf39emxIw23pYJFPtDubnilRU8J63BUeES8MUMpbhjw=";
     };
     aarch64-linux = {
       target = "aarch64-unknown-linux-gnu";
-      hash = "sha256-dGAczIawbsC06on7b6nlmksRXePNGIMH5qbrMFFaYy0=";
+      hash = "sha256-HuF3QbP83r7XzLFes7PclqVTbret1Y+A0kC7ToQo2M8=";
     };
     x86_64-linux = {
       target = "x86_64-unknown-linux-musl";
-      hash = "sha256-ISgSGxTFht02htrBFy8HTK3lXbZk52ahcUoFPchYjWA=";
+      hash = "sha256-0ghrsoAbN9XIeOADH6CR33SiSpC5P+nTMgHxWx6EuJE=";
     };
   };
   artifact = artifacts.${stdenvNoCC.hostPlatform.system};
