@@ -1,5 +1,6 @@
 import json
 import compression.zstd
+import http.client
 import tempfile
 import threading
 import unittest
@@ -68,6 +69,43 @@ class RouterTests(unittest.TestCase):
     def test_native_model_cannot_enter_zen_translation(self):
         with self.assertRaises(ValueError):
             router.responses_to_chat({"model": "gpt-5.6-sol", "input": "hello"})
+
+    def test_native_non_responses_route_is_forwarded(self):
+        upstream = mock.MagicMock()
+        upstream.status = 200
+        upstream.headers = {"Content-Type": "application/json"}
+        upstream.read.side_effect = [b'{"ok":true}', b""]
+        upstream.__enter__.return_value = upstream
+
+        server = router.QuietThreadingHTTPServer(("127.0.0.1", 0), router.RouterHandler)
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        try:
+            payload = json.dumps({"prompt": "red circle"}).encode()
+            with mock.patch.object(router.urllib.request, "urlopen", return_value=upstream) as urlopen:
+                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
+                try:
+                    connection.request(
+                        "POST",
+                        "/v1/images/generations",
+                        body=payload,
+                        headers={"Content-Type": "application/json"},
+                    )
+                    response = connection.getresponse()
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(json.loads(response.read()), {"ok": True})
+                finally:
+                    connection.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+            worker.join(timeout=5)
+
+        forwarded = urlopen.call_args.args[0]
+        self.assertEqual(
+            forwarded.full_url,
+            f"{router.NATIVE_BASE}/images/generations",
+        )
 
     def test_replayed_tool_call_and_output_become_chat_messages(self):
         chat, _, _, _ = router.responses_to_chat({

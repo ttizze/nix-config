@@ -503,9 +503,9 @@ class RouterHandler(BaseHTTPRequestHandler):
         return self.route_native(raw, content_encoding)
 
     def route_native(self, raw: bytes, content_encoding: str) -> None:
-        suffix = self.path.removeprefix("/v1")
-        if not suffix.startswith("/responses"):
+        if not self.path.startswith("/v1/"):
             return self.error(404, "native route not found")
+        suffix = self.path.removeprefix("/v1")
         headers = {"Content-Type": self.headers.get("Content-Type", "application/json")}
         if content_encoding:
             headers["Content-Encoding"] = content_encoding
