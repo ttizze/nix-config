@@ -219,6 +219,7 @@ in
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 = "true";
           # Helsinkiから遠隔DBへの接続はNodeの既定250msを超える。
           NODE_OPTIONS = "--network-family-autoselection-attempt-timeout=2000";
+          SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
         };
         serviceOverrides = {
           PrivateUsers = false;

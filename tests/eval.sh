@@ -37,3 +37,5 @@ nix eval --json "$ci_config" --apply '
   .["remote-agent"].url == "https://github.com/ttizze/remote-agent" and
   .["tsurumi"].url == "https://github.com/ttizze/cinema-maker"
 ' >/dev/null
+nix eval --raw "$ci_config.systemd.services.github-runner-tsurumi.environment.SSL_CERT_FILE" |
+  grep -qx '/etc/ssl/certs/ca-certificates.crt'
