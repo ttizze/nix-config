@@ -24,14 +24,16 @@ nix eval --json "$ci_config" --apply '
     groups = (builtins.getAttr runner.user config.users.users).extraGroups;
   }) config.services.github-runners
 ' | jq -e '
-  keys == ["agent-config", "nix-config", "tsurumi"] and
-  ([.[].user] | unique | length) == 3 and
-  ([.[].workDir] | unique | length) == 3 and
+  keys == ["agent-config", "nix-config", "remote-agent", "tsurumi"] and
+  ([.[].user] | unique | length) == 4 and
+  ([.[].workDir] | unique | length) == 4 and
   all(.[]; .user != "root") and
   (.["agent-config"].groups | index("docker") == null) and
   (.["nix-config"].groups | index("docker") == null) and
+  (.["remote-agent"].groups | index("docker") == null) and
   (.["tsurumi"].groups | index("docker") != null) and
   .["agent-config"].url == "https://github.com/ttizze/agent-config" and
   .["nix-config"].url == "https://github.com/ttizze/nix-config" and
+  .["remote-agent"].url == "https://github.com/ttizze/remote-agent" and
   .["tsurumi"].url == "https://github.com/ttizze/cinema-maker"
 ' >/dev/null

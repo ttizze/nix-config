@@ -71,17 +71,19 @@ Hetzner CX33 in Helsinki (`46.62.235.116`). Product repositories own their
 workflows, not this shared host. The `nixpkgs-server` and `disko` inputs pin its
 OS and disk configuration separately from the Mac environment.
 
-The host runs repository-scoped runners for `cinema-maker`, `agent-config`, and
-`nix-config`, with separate users and working directories. Only the product
-runner has Docker access. The product selects `[self-hosted, linux, x64, tsurumi-ci]`;
-the configuration repositories select `[self-hosted, linux, x64, nix-ci]`.
-ARM Linux builds run through QEMU; macOS CI stays on GitHub-hosted runners.
+The host runs repository-scoped runners for `cinema-maker`, `agent-config`,
+`nix-config`, and `remote-agent`, with separate users and working directories.
+Only the `cinema-maker` runner has Docker access; its workflow selects
+`[self-hosted, linux, x64, tsurumi-ci]`. The other repositories select
+`[self-hosted, linux, x64, nix-ci]`. `remote-agent` runs its native Linux build,
+Core and isolated Host tests, and Rust toolchain lookup here.
+ARM Linux builds run through QEMU; native macOS and Windows CI stay on GitHub-hosted runners.
 Nix builds are limited to one at a time with two build cores.
 
 Use `nix develop --command hcloud server list` to inspect the Hetzner project.
 Keep its CLI credentials outside the repository.
 
-Build with `just build-ci`, then apply with `just apply-ci` when all three
+Build with `just build-ci`, then apply with `just apply-ci` when all
 runners are idle. These commands update the existing server without formatting
 its disks. Verify the runner services and their GitHub online status afterward.
 
@@ -92,6 +94,7 @@ Transfer only that token to the corresponding root-owned mode-0600 file:
 - `cinema-maker`: `/var/lib/tsurumi-ci-registration-token`
 - `agent-config`: `/var/lib/agent-config-ci-registration-token`
 - `nix-config`: `/var/lib/nix-config-ci-registration-token`
+- `remote-agent`: `/var/lib/remote-agent-ci-registration-token`
 
 Do not store long-lived GitHub access tokens on the server. Registration state
 persists across ordinary package updates; new tokens are needed if registration

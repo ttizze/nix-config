@@ -72,7 +72,7 @@ apply-ci: build-ci
       echo "Refusing to apply from a dirty Git worktree." >&2
       exit 1
     fi
-    for repo in cinema-maker agent-config nix-config; do
+    for repo in cinema-maker agent-config nix-config remote-agent; do
       busy="$(gh api "repos/ttizze/$repo/actions/runners" --jq 'any(.runners[]; .busy)')"
       if [[ "$busy" != false ]]; then
         echo "Runner for $repo is busy; wait for the job to finish." >&2

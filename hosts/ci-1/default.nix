@@ -9,6 +9,7 @@ let
   nixCiRepositories = [
     "agent-config"
     "nix-config"
+    "remote-agent"
   ];
   runtimeLibraries = with pkgs; [
     alsa-lib
