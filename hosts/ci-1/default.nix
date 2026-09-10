@@ -6,6 +6,7 @@
   ...
 }:
 let
+  githubRunner = pkgs.callPackage ../../pkgs/github-runner { };
   nixCiRepositories = [
     "agent-config"
     "nix-config"
@@ -151,6 +152,7 @@ in
   services.github-runners =
     lib.genAttrs nixCiRepositories (repo: {
       enable = true;
+      package = githubRunner;
       name = "${repo}-ci-1";
       replace = true;
       url = "https://github.com/ttizze/${repo}";
@@ -180,6 +182,7 @@ in
     // {
       tsurumi = {
         enable = true;
+        package = githubRunner;
         name = "tsurumi-ci-1";
         replace = true;
         url = "https://github.com/ttizze/cinema-maker";

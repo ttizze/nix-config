@@ -80,6 +80,14 @@ Core and isolated Host tests, and Rust toolchain lookup here.
 ARM Linux builds run through QEMU; native macOS and Windows CI stay on GitHub-hosted runners.
 Nix builds are limited to one at a time with two build cores.
 
+`pkgs/github-runner` supplies the official Node 20.20.2 binary required by
+runner 2.337.0's internal `hashFiles()` helper. Nixpkgs has removed Node 20,
+while the runner's internal runtime selection still requires it. This explicit
+exception is confined to the runner package; JavaScript actions continue on
+Node 24 and project runtimes remain project-owned. The package build exercises
+the installed hash helper against known file contents. Remove the extra runtime
+when the upstream runner moves its internal helpers to Node 24.
+
 Use `nix develop --command hcloud server list` to inspect the Hetzner project.
 Keep its CLI credentials outside the repository.
 
