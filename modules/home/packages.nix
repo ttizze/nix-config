@@ -5,7 +5,6 @@
     claude-code
     circleback-cli
     codex-acp
-    codex-model-router
     curl
     dcg
     eza

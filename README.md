@@ -63,3 +63,38 @@ Cloudflare, Vercel, and Turso are additive recipes under `recipes/`; they are no
 Run `just rollback` to select and activate the previous nix-darwin generation. If the interactive shell is broken, start `/bin/zsh -f`, source `/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh`, enter this repository, and run `nix develop -c just rollback`.
 
 Homebrew application changes, authentication sessions, application databases, histories, and caches are outside Nix generation rollback and are never deleted by normal activation.
+
+## Shared Hetzner CI
+
+`hosts/ci-1/default.nix` owns the NixOS configuration for the existing
+Hetzner CX33 in Helsinki (`46.62.235.116`). Product repositories own their
+workflows, not this shared host. The `nixpkgs-server` and `disko` inputs pin its
+OS and disk configuration separately from the Mac environment.
+
+The host runs repository-scoped runners for `cinema-maker`, `agent-config`, and
+`nix-config`, with separate users and working directories. Only the product
+runner has Docker access. The product selects `[self-hosted, linux, x64, tsurumi-ci]`;
+the configuration repositories select `[self-hosted, linux, x64, nix-ci]`.
+ARM Linux builds run through QEMU; macOS CI stays on GitHub-hosted runners.
+Nix builds are limited to one at a time with two build cores.
+
+Use `nix develop --command hcloud server list` to inspect the Hetzner project.
+Keep its CLI credentials outside the repository.
+
+Build with `just build-ci`, then apply with `just apply-ci` when all three
+runners are idle. These commands update the existing server without formatting
+its disks. Verify the runner services and their GitHub online status afterward.
+
+For initial registration, issue a short-lived registration token locally for
+each repository using `gh api --method POST repos/ttizze/REPOSITORY/actions/runners/registration-token`.
+Transfer only that token to the corresponding root-owned mode-0600 file:
+
+- `cinema-maker`: `/var/lib/tsurumi-ci-registration-token`
+- `agent-config`: `/var/lib/agent-config-ci-registration-token`
+- `nix-config`: `/var/lib/nix-config-ci-registration-token`
+
+Do not store long-lived GitHub access tokens on the server. Registration state
+persists across ordinary package updates; new tokens are needed if registration
+settings change. Keep the Nix-managed runner package current; it does not self-update.
+
+The experimental `codex-model-router` package and LaunchAgent have been removed.

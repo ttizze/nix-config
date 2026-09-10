@@ -32,22 +32,27 @@ jobs:
 
   linux-home-manager:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 60
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
-        include:
-          - runner: ubuntu-24.04
-            configuration: tt@linux-x86_64
-          - runner: ubuntu-24.04-arm
-            configuration: tt@linux-aarch64
-    runs-on: ${{ matrix.runner }}
+        configuration: [tt@linux-x86_64, tt@linux-aarch64]
+    runs-on: [self-hosted, linux, x64, nix-ci]
     steps:
       - uses: actions/checkout@v4
       - name: Configure private agent-config access
         env:
           AGENT_CONFIG_SSH_KEY: ${{ secrets.AGENT_CONFIG_SSH_KEY }}
         run: scripts/setup-agent-config-ssh
-      - name: Install Lix
-        uses: samueldr/lix-gha-installer-action@8dc19fbd6451fa106a68ecb2dafeeeb90dff3a29
+      - name: Validate shared infrastructure contracts
+        if: matrix.configuration == 'tt@linux-x86_64'
+        run: nix develop --command bash tests/eval.sh
+      - name: Build shared CI host
+        if: matrix.configuration == 'tt@linux-x86_64'
+        run: nix build --no-link .#nixosConfigurations.ci-1.config.system.build.toplevel
       - name: Build Home Manager activation
         run: nix build --print-out-paths ".#homeConfigurations.\"${{ matrix.configuration }}\".activationPackage"
+      - name: Remove private agent-config key
+        if: always()
+        run: rm -f "$HOME/.ssh/agent-config-actions"

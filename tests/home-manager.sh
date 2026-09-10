@@ -19,16 +19,17 @@ nix eval --json "$config.programs.git.settings.alias.clean-gone" | jq -e 'type =
 nix eval --json "$config.programs.ssh.includes" | jq -e 'index("~/.ssh/1Password/config") and index("~/.ssh/config.local")' >/dev/null
 nix eval --raw "$config.home.sessionVariables.SSH_AUTH_SOCK" | grep -Fqx '/Users/tt/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
 nix eval --json "$config.launchd.agents" --apply 'agents: builtins.attrNames agents' |
-  jq -e 'index("codex-cli-path") == null' >/dev/null
+  jq -e 'index("codex-cli-path") == null and index("codex-model-router") == null' >/dev/null
 nix eval --json "$config.home.packages" --apply 'packages: map (package: package.name) packages' |
   jq -e '
     any(.[]; startswith("claude-code-")) and
-    any(.[]; . == "claude-agent-acp-0.69.0") and
+    any(.[]; . == "claude-agent-acp-0.75.1") and
     any(.[]; startswith("codex-")) and
-    any(.[]; . == "codex-acp-1.6.2") and
+    any(.[]; . == "codex-acp-1.11.0") and
     any(.[]; startswith("circleback-cli-")) and
     any(.[]; startswith("dcg-")) and
     all(.[]; startswith("opencodex-") | not) and
+    all(.[]; startswith("codex-model-router-") | not) and
     any(.[]; startswith("gnupg-")) and
     any(.[]; startswith("pinentry-mac-")) and
     all(.[];

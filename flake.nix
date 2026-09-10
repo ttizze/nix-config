@@ -4,6 +4,12 @@
   inputs = {
     nixpkgs.url = "git+https://github.com/NixOS/nixpkgs.git?ref=nixpkgs-unstable";
 
+    nixpkgs-server.url = "github:NixOS/nixpkgs/nixos-unstable";
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs-server";
+    };
+
     agent-config = {
       url = "git+ssh://git@github.com/ttizze/agent-config.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -54,17 +60,10 @@
         "x86_64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
-      overlay = final: prev: {
+      overlay = final: _prev: {
         circleback-cli = final.callPackage ./pkgs/circleback-cli { };
         codex-acp = final.callPackage ./pkgs/codex-acp { };
-        codex-model-router = final.callPackage ./pkgs/codex-model-router { };
         dcg = final.callPackage ./pkgs/dcg.nix { };
-        # tmux 3.7c requires an explicit jemalloc choice on macOS.
-        tmux = prev.tmux.overrideAttrs (old: {
-          configureFlags =
-            (old.configureFlags or [ ])
-            ++ final.lib.optional final.stdenv.hostPlatform.isDarwin "--disable-jemalloc";
-        });
       };
       allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "claude-code" ];
       mkPkgs =
@@ -86,6 +85,13 @@
         };
     in
     {
+      nixosConfigurations.ci-1 = inputs.nixpkgs-server.lib.nixosSystem {
+        modules = [
+          inputs.disko.nixosModules.disko
+          ./hosts/ci-1
+        ];
+      };
+
       darwinConfigurations.tinoMac-mini = nix-darwin.lib.darwinSystem {
         specialArgs = {
           inherit
@@ -117,7 +123,6 @@
             circleback-cli
             claude-agent-acp
             codex-acp
-            codex-model-router
             dcg
             ;
           default = pkgs.dcg;
@@ -133,7 +138,6 @@
           circleback-cli = pkgs.circleback-cli;
           claude-agent-acp = pkgs.claude-agent-acp;
           codex-acp = pkgs.codex-acp;
-          codex-model-router = pkgs.codex-model-router;
           dcg = pkgs.dcg;
         }
       );
@@ -146,6 +150,7 @@
         {
           default = pkgs.mkShellNoCC {
             packages = with pkgs; [
+              hcloud
               jq
               just
               nixfmt-tree

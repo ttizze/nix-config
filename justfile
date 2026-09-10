@@ -59,3 +59,24 @@ agmsg-update:
 apps-update:
     brew update
     brew upgrade --cask 1password 1password-cli nikitabobko/tap/aerospace chatgpt claude cmux discord google-chrome karabiner-elements logi-options+ zed
+
+# Build the shared CI host remotely without activation.
+build-ci:
+    nix run --inputs-from . nixpkgs-server#nixos-rebuild -- build --flake .#ci-1 --build-host root@46.62.235.116 --target-host root@46.62.235.116
+
+# Apply committed infrastructure only while every runner is idle.
+apply-ci: build-ci
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -n "$(git status --porcelain)" ]]; then
+      echo "Refusing to apply from a dirty Git worktree." >&2
+      exit 1
+    fi
+    for repo in cinema-maker agent-config nix-config; do
+      busy="$(gh api "repos/ttizze/$repo/actions/runners" --jq 'any(.runners[]; .busy)')"
+      if [[ "$busy" != false ]]; then
+        echo "Runner for $repo is busy; wait for the job to finish." >&2
+        exit 1
+      fi
+    done
+    nix run --inputs-from . nixpkgs-server#nixos-rebuild -- switch --flake .#ci-1 --build-host root@46.62.235.116 --target-host root@46.62.235.116
