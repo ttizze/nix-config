@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789376522,
-        "narHash": "sha256-ngAP2lN+Qa911z0wX7w4BLSyiI9NicjeC7D55JzR+qo=",
+        "lastModified": 1789608117,
+        "narHash": "sha256-jR/07FqxPfkmVbHH+UC24TGsJ7FY2TGc15ZWCVPDhRs=",
         "ref": "main",
-        "rev": "45009404b1f72c53c4b3cb621443f56c66a2ea70",
-        "revCount": 35,
+        "rev": "3ce51281cd3f0235c60a368a900cfe15998f0b15",
+        "revCount": 36,
         "type": "git",
         "url": "ssh://git@github.com/ttizze/agent-config.git"
       },
@@ -65,11 +65,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789012927,
-        "narHash": "sha256-+h1H0g2XMGXK0fNUlX4ajCmCz8u05IR7k0Cj2MJviBY=",
+        "lastModified": 1789482455,
+        "narHash": "sha256-pD3qVlQ4mUCFoTWrYtxecpSitQMsgJvJIN0FUIDZoEU=",
         "ref": "master",
-        "rev": "df044b78fd9ec60d0e54752169666e6e1d393798",
-        "revCount": 7233,
+        "rev": "efa3ccb4c3cc90d832eab232976379058fa75aa3",
+        "revCount": 7276,
         "type": "git",
         "url": "https://github.com/nix-community/home-manager.git"
       },
@@ -172,11 +172,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1789012029,
-        "narHash": "sha256-1CBkBf+Nhggykzlx0jvXrj5rk20btl+tK8Fa8Ml/BL4=",
+        "lastModified": 1789370336,
+        "narHash": "sha256-6RSEDHIWQtesQKWSu5qRai8L2h4KgCgMEfJHstW99G4=",
         "ref": "nixpkgs-unstable",
-        "rev": "d5dfd8e6716dde34398bc14bc87c10dece9c8c68",
-        "revCount": 1070774,
+        "rev": "c7def046b9a883d46974757852106483d741586f",
+        "revCount": 1073483,
         "type": "git",
         "url": "https://github.com/NixOS/nixpkgs.git"
       },

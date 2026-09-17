@@ -25,7 +25,7 @@ nix eval --json "$config.home.packages" --apply 'packages: map (package: package
     any(.[]; startswith("claude-code-")) and
     any(.[]; . == "claude-agent-acp-0.75.1") and
     any(.[]; startswith("codex-")) and
-    any(.[]; . == "codex-acp-1.11.0") and
+    any(.[]; . == "codex-acp-1.12.0") and
     any(.[]; startswith("circleback-cli-")) and
     any(.[]; startswith("dcg-")) and
     all(.[]; startswith("opencodex-") | not) and
