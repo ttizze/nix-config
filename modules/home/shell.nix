@@ -32,6 +32,12 @@
       };
 
       initContent = ''
+        # Search history by the typed prefix with either terminal arrow encoding.
+        bindkey '^[[A' history-beginning-search-backward
+        bindkey '^[[B' history-beginning-search-forward
+        bindkey '^[OA' history-beginning-search-backward
+        bindkey '^[OB' history-beginning-search-forward
+
         repo() {
           local destination
           destination="$(ghq root)/github.com/$1"
