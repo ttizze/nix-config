@@ -77,6 +77,8 @@ Only the `cinema-maker` runner has Docker access; its workflow selects
 `[self-hosted, linux, x64, tsurumi-ci]`. The other repositories select
 `[self-hosted, linux, x64, nix-ci]`. `remote-agent` runs its native Linux build,
 Core and isolated Host tests, and Rust toolchain lookup here.
+The `cinema-maker` runner sets `SSL_CERT_FILE` to the NixOS system CA bundle
+so workerd can verify outbound HTTPS connections during browser tests.
 ARM Linux builds run through QEMU; native macOS and Windows CI stay on GitHub-hosted runners.
 Nix builds are limited to one at a time with two build cores.
 
