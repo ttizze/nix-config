@@ -64,48 +64,16 @@ Run `just rollback` to select and activate the previous nix-darwin generation. I
 
 Homebrew application changes, authentication sessions, application databases, histories, and caches are outside Nix generation rollback and are never deleted by normal activation.
 
-## Shared Hetzner CI
+## Continuous integration
 
-`hosts/ci-1/default.nix` owns the NixOS configuration for the existing
-Hetzner CX33 in Helsinki (`46.62.235.116`). Product repositories own their
-workflows, not this shared host. The `nixpkgs-server` and `disko` inputs pin its
-OS and disk configuration separately from the Mac environment.
+Checks run on standard GitHub-hosted runners. `macos-15` checks the repository
+and project templates and builds the Darwin system without activation.
+`ubuntu-24.04` and `ubuntu-24.04-arm` build the matching Linux Home Manager
+configurations natively. Each runner installs Lix before using the pinned Nix
+inputs.
 
-The host runs repository-scoped runners for `cinema-maker`, `agent-config`,
-`nix-config`, and `remote-agent`, with separate users and working directories.
-Only the `cinema-maker` runner has Docker access; its workflow selects
-`[self-hosted, linux, x64, tsurumi-ci]`. The other repositories select
-`[self-hosted, linux, x64, nix-ci]`. `remote-agent` runs its native Linux build,
-Core and isolated Host tests, and Rust toolchain lookup here.
-ARM Linux builds run through QEMU; native macOS and Windows CI stay on GitHub-hosted runners.
-Nix builds are limited to one at a time with two build cores.
-
-`pkgs/github-runner` supplies the official Node 20.20.2 binary required by
-runner 2.337.0's internal `hashFiles()` helper. Nixpkgs has removed Node 20,
-while the runner's internal runtime selection still requires it. This explicit
-exception is confined to the runner package; JavaScript actions continue on
-Node 24 and project runtimes remain project-owned. The package build exercises
-the installed hash helper against known file contents. Remove the extra runtime
-when the upstream runner moves its internal helpers to Node 24.
-
-Use `nix develop --command hcloud server list` to inspect the Hetzner project.
-Keep its CLI credentials outside the repository.
-
-Build with `just build-ci`, then apply with `just apply-ci` when all
-runners are idle. These commands update the existing server without formatting
-its disks. Verify the runner services and their GitHub online status afterward.
-
-For initial registration, issue a short-lived registration token locally for
-each repository using `gh api --method POST repos/ttizze/REPOSITORY/actions/runners/registration-token`.
-Transfer only that token to the corresponding root-owned mode-0600 file:
-
-- `cinema-maker`: `/var/lib/tsurumi-ci-registration-token`
-- `agent-config`: `/var/lib/agent-config-ci-registration-token`
-- `nix-config`: `/var/lib/nix-config-ci-registration-token`
-- `remote-agent`: `/var/lib/remote-agent-ci-registration-token`
-
-Do not store long-lived GitHub access tokens on the server. Registration state
-persists across ordinary package updates; new tokens are needed if registration
-settings change. Keep the Nix-managed runner package current; it does not self-update.
+The private `agent-config` input is fetched with the repository's existing
+read-only deploy key. Fork pull requests do not receive that key or run jobs
+that require it. Runner configuration and job scripts are checked by actionlint.
 
 The experimental `codex-model-router` package and LaunchAgent have been removed.

@@ -22,9 +22,6 @@ if grep -Fq 'ssh-keyscan' scripts/setup-agent-config-ssh; then
   echo 'setup-agent-config-ssh must use the pinned GitHub host key' >&2
   exit 1
 fi
-grep -Fq 'runs-on: [self-hosted, linux, x64, nix-ci]' .github/workflows/check.yml
-grep -Fq 'tt@linux-aarch64' .github/workflows/check.yml
-grep -Fq 'tt@linux-x86_64' .github/workflows/check.yml
 grep -Fq 'git+ssh://git@github.com/ttizze/agent-config.git?ref=main' flake.nix
 # shellcheck disable=SC2016 # This is a literal GitHub Actions expression.
 test "$(grep -Fc 'AGENT_CONFIG_SSH_KEY: ${{ secrets.AGENT_CONFIG_SSH_KEY }}' .github/workflows/check.yml)" -eq 2

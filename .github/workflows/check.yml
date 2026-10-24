@@ -35,22 +35,24 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
-        configuration: [tt@linux-x86_64, tt@linux-aarch64]
-    runs-on: [self-hosted, linux, x64, nix-ci]
+        include:
+          - configuration: tt@linux-x86_64
+            runner: ubuntu-24.04
+          - configuration: tt@linux-aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Configure private agent-config access
         env:
           AGENT_CONFIG_SSH_KEY: ${{ secrets.AGENT_CONFIG_SSH_KEY }}
         run: scripts/setup-agent-config-ssh
-      - name: Validate shared infrastructure contracts
+      - name: Install Lix
+        uses: samueldr/lix-gha-installer-action@8dc19fbd6451fa106a68ecb2dafeeeb90dff3a29
+      - name: Validate configuration contracts
         if: matrix.configuration == 'tt@linux-x86_64'
         run: nix develop --command bash tests/eval.sh
-      - name: Build shared CI host
-        if: matrix.configuration == 'tt@linux-x86_64'
-        run: nix build --no-link .#nixosConfigurations.ci-1.config.system.build.toplevel
       - name: Build Home Manager activation
         run: nix build --print-out-paths ".#homeConfigurations.\"${{ matrix.configuration }}\".activationPackage"
       - name: Remove private agent-config key

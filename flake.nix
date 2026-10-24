@@ -85,13 +85,6 @@
         };
     in
     {
-      nixosConfigurations.ci-1 = inputs.nixpkgs-server.lib.nixosSystem {
-        modules = [
-          inputs.disko.nixosModules.disko
-          ./hosts/ci-1
-        ];
-      };
-
       darwinConfigurations.tinoMac-mini = nix-darwin.lib.darwinSystem {
         specialArgs = {
           inherit
@@ -150,6 +143,7 @@
         {
           default = pkgs.mkShellNoCC {
             packages = with pkgs; [
+              actionlint
               hcloud
               jq
               just
