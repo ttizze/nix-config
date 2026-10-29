@@ -1,4 +1,10 @@
-{ pkgs, username, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  username,
+  ...
+}:
 {
   imports = [
     ../../modules/home/applications.nix
@@ -7,6 +13,10 @@
 
   home = {
     homeDirectory = "/Users/${username}";
+    # Keep Claude settings editable; changes remain visible in agent-config's Git diff.
+    file.".claude/settings.json".source = lib.mkForce (
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/ghq/github.com/ttizze/agent-config/claude/settings.json"
+    );
     packages = with pkgs; [
       pinentry_mac
     ];
