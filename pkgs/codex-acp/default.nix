@@ -7,11 +7,11 @@
 
 buildNpmPackage rec {
   pname = "codex-acp";
-  version = "1.12.0";
+  version = "2.3.0";
 
   src = ./.;
 
-  npmDepsHash = "sha256-YNcY84pSA1MaTbaI8gO8OQvBL7+hQdtTdQdyzMh3VuE=";
+  npmDepsHash = "sha256-4ImRDFN9sG1u5gAdAk9e3fCtTTvoVr0Kfe/RFtA/DsM=";
   npmFlags = [ "--ignore-scripts" ];
   dontNpmBuild = true;
 
