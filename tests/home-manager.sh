@@ -19,7 +19,8 @@ nix eval --json "$config.programs.git.settings.alias.clean-gone" | jq -e 'type =
 nix eval --json "$config.programs.ssh.includes" | jq -e 'index("~/.ssh/1Password/config") and index("~/.ssh/config.local")' >/dev/null
 nix eval --raw "$config.home.sessionVariables.SSH_AUTH_SOCK" | grep -Fqx '/Users/tt/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
 nix eval --json "$config.launchd.agents" --apply 'agents: builtins.attrNames agents' |
-  jq -e 'index("codex-cli-path") == null and index("codex-model-router") == null' >/dev/null
+  jq -e 'index("codex-cli-path") == null and index("codex-model-router") == null and index("iroh-ssh") != null' >/dev/null
+nix eval --raw "$config.home.file.\".ssh/config\".text" | grep -Fqx 'Host bex-wsl'
 nix eval --json "$config.home.packages" --apply 'packages: map (package: package.name) packages' |
   jq -e '
     any(.[]; startswith("claude-code-")) and
@@ -75,3 +76,9 @@ jq -e '.agent_servers."codex-acp".type == "registry" and .theme.mode == "system"
 
 nix eval --raw '.#homeConfigurations."tt@linux-aarch64".activationPackage.drvPath' >/dev/null
 nix eval --raw '.#homeConfigurations."tt@linux-x86_64".activationPackage.drvPath' >/dev/null
+
+wsl='.#homeConfigurations."tizze@bex-wsl".config'
+nix eval --json "$wsl.systemd.user.services" --apply 'services: builtins.attrNames services' |
+  jq -e '. == ["iroh-ssh", "mac-nix-builder"]' >/dev/null
+nix eval --raw "$wsl.xdg.configFile.\"nix/machines\".text" | grep -Fq 'ssh-ng://tt@127.0.0.1:22440?'
+nix eval --raw '.#homeConfigurations."tizze@bex-wsl".activationPackage.drvPath' >/dev/null

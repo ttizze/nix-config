@@ -104,6 +104,10 @@
       homeConfigurations = {
         "tt@linux-aarch64" = mkLinuxHome "aarch64-linux";
         "tt@linux-x86_64" = mkLinuxHome "x86_64-linux";
+        "tizze@bex-wsl" = home-manager.lib.homeManagerConfiguration {
+          pkgs = mkPkgs "x86_64-linux";
+          modules = [ ./home/tizze/bex-wsl.nix ];
+        };
       };
 
       packages = forAllSystems (

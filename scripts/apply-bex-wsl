@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Refusing to apply from a dirty Git worktree." >&2
+  exit 1
+fi
+
+# The Mac's Lix stalls on ssh-ng stores served by the WSL PC's Nix, so the
+# committed source is copied as files and the WSL PC evaluates and builds it.
+# Its configuration reads only public inputs. Non-interactive SSH sessions
+# there do not have Nix on PATH.
+nix_bin=/nix/var/nix/profiles/default/bin
+source_dir=.cache/nix-config-apply
+archive="$(mktemp)"
+trap 'rm -f "$archive"' EXIT
+git archive --format=tar HEAD >"$archive"
+scp -q "$archive" "bex-wsl:$source_dir.tar"
+# shellcheck disable=SC2029 # Paths are expanded on the WSL PC.
+activation="$(
+  ssh bex-wsl "rm -rf ~/$source_dir && mkdir -p ~/$source_dir && tar -xf ~/$source_dir.tar -C ~/$source_dir &&
+    $nix_bin/nix build --no-link --print-out-paths path:\$HOME/$source_dir#homeConfigurations.tizze@bex-wsl.activationPackage"
+)"
+
+# Activation may restart the iroh-ssh server carrying this SSH session, so it
+# runs as its own user unit and is checked after reconnecting.
+unit="home-manager-activate-$(date +%s)"
+ssh bex-wsl systemd-run --user --unit="$unit" --setenv=PATH="$nix_bin:/usr/bin:/bin" "$activation/activate"
+for _ in {1..20}; do
+  # A successful transient unit is unloaded (inactive); a failed one stays failed.
+  case "$(ssh bex-wsl systemctl --user is-active "$unit" 2>/dev/null)" in
+    inactive)
+      ssh bex-wsl systemctl --user is-active iroh-ssh mac-nix-builder
+      exit 0
+      ;;
+    failed)
+      ssh bex-wsl journalctl --user --unit="$unit" --no-pager >&2
+      exit 1
+      ;;
+  esac
+  sleep 3
+done
+echo "Timed out waiting for $unit on bex-wsl." >&2
+exit 1

@@ -1,6 +1,9 @@
 { pkgs, username, ... }:
 {
-  imports = [ ../../modules/home/applications.nix ];
+  imports = [
+    ../../modules/home/applications.nix
+    ../../modules/home/bex-builder.nix
+  ];
 
   home = {
     homeDirectory = "/Users/${username}";

@@ -35,6 +35,12 @@ just rollback
 
 `just apply` refuses the wrong host and a dirty Git worktree. It builds before requesting `sudo`. `just apps-update` is the only command that explicitly upgrades declared Homebrew casks.
 
+## remote-agent build pair
+
+The Mac sends remote-agent's Rust checks to the WSL PC as `ssh bex-wsl`, and the WSL PC's Nix builds `aarch64-darwin` on the Mac. Both links are SSH over `iroh-ssh` with the default n0 relays. `tizze@bex-wsl` is a Home Manager configuration that contains only this pair; the WSL PC's shell stays unmanaged.
+
+`just apply` activates the Mac side. `just apply-bex-wsl` copies the committed source to the WSL PC, builds the activation there, and runs it as a user unit, because activation can restart the iroh-ssh server that carries the SSH session. The iroh and SSH private keys stay in `~/.local/state/bex-nix-builder` on each machine and are never part of the configuration.
+
 ## First activation
 
 1. Install Lix with the multi-user installer.

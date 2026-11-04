@@ -40,6 +40,10 @@ diff: build
 apply: check-core build
     scripts/apply "{{host}}"
 
+# Activate the WSL build peer over its iroh SSH link from a clean worktree.
+apply-bex-wsl: check-core
+    scripts/apply-bex-wsl
+
 # Update one input, or all inputs when no name is supplied.
 update input="":
     scripts/update "{{input}}"
