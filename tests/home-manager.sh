@@ -20,7 +20,7 @@ nix eval --json "$config.programs.ssh.includes" | jq -e 'index("~/.ssh/1Password
 nix eval --raw "$config.home.sessionVariables.SSH_AUTH_SOCK" | grep -Fqx '/Users/tt/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock'
 nix eval --json "$config.launchd.agents" --apply 'agents: builtins.attrNames agents' |
   jq -e 'index("codex-cli-path") == null and index("codex-model-router") == null and index("iroh-ssh") != null' >/dev/null
-nix eval --raw "$config.home.file.\".ssh/config\".text" | grep -Fqx 'Host bex-wsl'
+nix eval --json "$config.programs.ssh.settings" --apply builtins.attrNames | jq -e 'index("bex-wsl") != null' >/dev/null
 nix eval --json "$config.home.packages" --apply 'packages: map (package: package.name) packages' |
   jq -e '
     any(.[]; startswith("claude-code-")) and
