@@ -23,14 +23,14 @@ def emit(event, **values):
     print(json.dumps({"event": event, **values}), flush=True)
 
 
-def validate_mounts(store, remote, cache):
+def validate_mounts(store, remote):
     root = pathlib.Path("/")
     identity = subprocess.check_output(
         ["findmnt", "-n", "-T", "/", "-o", "FSTYPE,UUID"], text=True
     ).split()
     if identity != ["ext4", ROOT_UUID]:
         raise RuntimeError("Unexpected Ubuntu root filesystem")
-    for path in (store, remote, cache):
+    for path in (store, remote):
         if path.is_symlink() or path.resolve(strict=True) != path or not path.is_dir():
             raise RuntimeError("Unexpected build-storage path: " + str(path))
         if path.stat().st_dev != root.stat().st_dev:
@@ -278,8 +278,7 @@ def main():
     home = pathlib.Path.home()
     store = home / ".cargo"
     remote = home / ".cache/agent-remote-builds"
-    cache = home / ".cache/kache"
-    validate_mounts(store, remote, cache)
+    validate_mounts(store, remote)
     descriptor = os.open(remote / ".bex-cache-maintenance.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
     try:
         if not stat.S_ISREG(os.fstat(descriptor).st_mode):
@@ -290,7 +289,7 @@ def main():
             emit("skipped", reason="maintenance_already_running")
             return
         candidates = collect_candidates(store, remote)
-        roots = [store / "targets", cache, *(candidate.path for candidate in candidates)]
+        roots = [store / "targets", *(candidate.path for candidate in candidates)]
         emit("start", dry_run=arguments.dry_run, minimum_age_days=2, candidate_count=len(candidates))
         clean_budget(candidates, roots, store.stat().st_dev, arguments.max_bytes, arguments.dry_run, time.time())
     finally:
