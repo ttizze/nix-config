@@ -137,6 +137,25 @@
           codex-acp = pkgs.codex-acp;
           dcg = pkgs.dcg;
         }
+        // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+          bex-cache-maintenance =
+            pkgs.runCommand "bex-cache-maintenance-tests"
+              {
+                nativeBuildInputs = with pkgs; [
+                  python3
+                  git
+                  coreutils
+                  findutils
+                  util-linux
+                ];
+              }
+              ''
+                export PYTHONDONTWRITEBYTECODE=1
+                cd ${./modules/home/bex-cache-maintenance}
+                python3 -m unittest -v
+                touch "$out"
+              '';
+        }
       );
 
       devShells = forAllSystems (

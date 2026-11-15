@@ -57,6 +57,9 @@ jobs:
         run: nix develop --command bash tests/eval.sh
       - name: Build Home Manager activation
         run: nix build --print-out-paths ".#homeConfigurations.\"${{ matrix.configuration }}\".activationPackage"
+      - name: Test builder cache maintenance
+        if: matrix.configuration == 'tizze@bex-wsl'
+        run: nix build .#checks.x86_64-linux.bex-cache-maintenance
       - name: Remove private agent-config key
         if: always()
         run: rm -f "$HOME/.ssh/agent-config-actions"

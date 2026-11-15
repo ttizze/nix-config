@@ -79,6 +79,8 @@ nix eval --raw '.#homeConfigurations."tt@linux-x86_64".activationPackage.drvPath
 
 wsl='.#homeConfigurations."tizze@bex-wsl".config'
 nix eval --json "$wsl.systemd.user.services" --apply 'services: builtins.attrNames services' |
-  jq -e '. == ["iroh-ssh", "mac-nix-builder"]' >/dev/null
+  jq -e '. == ["bex-cache-maintenance", "iroh-ssh", "mac-nix-builder"]' >/dev/null
+nix eval --json "$wsl.systemd.user.timers.bex-cache-maintenance.Timer" |
+  jq -e '.OnCalendar == "hourly" and .Persistent' >/dev/null
 nix eval --raw "$wsl.xdg.configFile.\"nix/machines\".text" | grep -Fq 'ssh-ng://tt@127.0.0.1:22440?'
 nix eval --raw '.#homeConfigurations."tizze@bex-wsl".activationPackage.drvPath' >/dev/null
